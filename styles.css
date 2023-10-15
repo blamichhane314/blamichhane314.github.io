@@ -1,17 +1,19 @@
 body {
-    background-color: #1D1F21; /* Dark grey for background */
-    color: #C0C5CE; /* Light grey for main text */
+    background-color: #2f2f2f;  /* subtle shade of grey */
+    color: #f5f5f5;  /* slightly white text */
     font-family: 'Times New Roman', serif;
 }
 
-h1, h2, h3 {
-    color: #707880; /* Slightly different shade of grey for headers */
-    font-weight: bold;
+footer {
+    background-color: #1a1a1a;  /* even darker grey for the footer */
+    color: #ffffff;  /* pure white text for footer */
 }
 
 a {
-    color: #8A9DAF; /* Another shade of grey for links */
-    text-decoration: none; /* Removing underline for a sleek look */
+    color: #ffffff;  /* white text for links */
+    text-decoration: none;  /* remove underline from links */
 }
 
-/* Add more styles according to your preference */
+a:hover {
+    text-decoration: underline;  /* add underline on hover */
+}
