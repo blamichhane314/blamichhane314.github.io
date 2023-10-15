@@ -1,0 +1,17 @@
+body {
+    background-color: #1D1F21; /* Dark grey for background */
+    color: #C0C5CE; /* Light grey for main text */
+    font-family: 'Times New Roman', serif;
+}
+
+h1, h2, h3 {
+    color: #707880; /* Slightly different shade of grey for headers */
+    font-weight: bold;
+}
+
+a {
+    color: #8A9DAF; /* Another shade of grey for links */
+    text-decoration: none; /* Removing underline for a sleek look */
+}
+
+/* Add more styles according to your preference */
