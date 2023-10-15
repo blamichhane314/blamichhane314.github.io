@@ -16,7 +16,8 @@
         <h1>Bishal Lamichhane</h1>
         <p>Second year PhD student in Statistics and Data Science</p>
     </header>
-   {% include_relative README.md %}
+   {% capture readme_content %}{% include_relative README.md %}{% endcapture %}
+{{ readme_content | markdownify }}
     <footer>
         <p>Find me on <a href="https://github.com/your_github_username">GitHub</a></p>
     </footer>
