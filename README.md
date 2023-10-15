@@ -12,7 +12,7 @@ Recently, one area of interest in my research has been exploring the feasibility
 -  Bishal Lamichhane, Joseph Palardy, Aniket Kumar Singh: Beyond Human Bidders: The Nuances of Large-Language-Model-Agent Performance in a Simple English Auction (**Submitted**)
 -  Aniket Kumar Singh, Suman Devkota, Bishal Lamichhane, Uttam Dhakal, Chandra Dhakal:  The Confidence-Competence Gap in Large Language Models: A Cognitive Study  [arXiv](https://arxiv.org/abs/2309.16145) (Preprint)
 
-  
-
+## Unpublished Projects
+- Ethan Gerak, Bishal Lamichhane, Joshua Teye: Youngstown Streetlight Traffic Analysis (2022) 
  
 
