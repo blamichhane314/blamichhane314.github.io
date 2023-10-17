@@ -8,14 +8,6 @@ I am currently a second-year Ph.D. student in the Department of Mathematics and 
 Recently, one area of interest in my research has been exploring the feasibility of Large Language Models (LLMs) as substitutes for human involvement in simulation-based experiments.
 
 
-## Publications
 
--  Bishal Lamichhane, Deena Schmidt, Willson Basyal: LLM Agents in Social Network Dynamics: A Study on Information Flow and Propagation (In preparation) 
--  Bishal Lamichhane, Aniket Kumar Singh, Suman Devkota, Uttam Dhakal, Subham Singh, Chandra Dhakal:  Influence of Genre-Specific Music and Characteristic Propagation Using Network Analysis and Machine Learning Algorithms (**Submitted**)
--  Bishal Lamichhane, Joseph Palardy, Aniket Kumar Singh: Beyond Human Bidders: The Nuances of Large-Language-Model-Agent Performance in a Simple English Auction (**Submitted**)
--  Aniket Kumar Singh, Suman Devkota, Bishal Lamichhane, Uttam Dhakal, Chandra Dhakal:  The Confidence-Competence Gap in Large Language Models: A Cognitive Study  [arXiv](https://arxiv.org/abs/2309.16145) (Preprint)
-
-## Unpublished Projects
-- Ethan Gerak, Bishal Lamichhane, Joshua Teye: Youngstown Streetlight Traffic Analysis (2022) [(Paper)](./Unpublished_Projects/StreetlightFinalReport.pdf) 
  
-
+## [Publications](blamichhane314.github.io/publications.md)   | [Unpublished Projects](/blamichhane314.github.io/unpublishedproject.md) 
