@@ -2,7 +2,7 @@
 
 ## About Me
 
-I am a second-year PhD student at the University of Nevada, Reno (Statistics and Data Science). My research focuses on graph (machine learning and network models). 
+I am a second-year PhD student at the University of Nevada, Reno (Statistics and Data Science). 
 
 ## Research Interests
 
@@ -51,11 +51,15 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 ### COMAP Mathematical Contest in Modeling([MCM](https://www.contest.comap.com/undergraduate/contests/)) 
 
 - [Gold and Bitcoin Portfolio Modeling, 2022](https://drive.google.com/file/d/1xftjrDIcdHBbYioAdFXh7kWbRrQsWtrr/view?usp=share_link), Meritorious Winner 
-- [Musical Influence Network, 2021](https://drive.google.com/file/d/1rW55gNR1pfPGLMU1mO7NfIJUJqUgJSdE/view?usp=share_link), Meritorious Winner
+- [Musical Influence Network Analysis, 2021](https://drive.google.com/file/d/1rW55gNR1pfPGLMU1mO7NfIJUJqUgJSdE/view?usp=share_link), Meritorious Winner
 - [Analyzing Plastic Waste Problem, 2020](https://drive.google.com/file/d/1G_zh8u8dzi1kN4I7EXj21vqOJY7xKAAA/view?usp=share_link), Honorable Mention
 - [Drones for Disaster: an Optimization Problem, 2019](https://drive.google.com/file/d/1epSLIp4k7kVPFBjb52NCsZms6u5b_UUT/view?usp=share_link), Successful Participant 
 
-  
+## Education 
+
+- Ph.D. in Statistics and Data Science, Department of Mathematics and Statistics, University of Nevada, Reno                2022 - Present
+- Bachelor of Science in Mathematics, Department of Mathematics and Statistics, Youngstown State University                 2018 - 2022 
+
 ## Blog
 [Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) | [AI Research For Good](https://www.airesearchforgood.org)  | [The Skeptics](https://meskeptic.wordpress.com)
 
