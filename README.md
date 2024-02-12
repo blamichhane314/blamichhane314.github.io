@@ -1,4 +1,4 @@
-# [Bishal Lamichhane]
+# Bishal Lamichhane
 
 ## About Me
 
@@ -15,19 +15,17 @@ I am a second-year PhD student at the University of Nevada, Reno, specializing i
 I am a Graduate Teaching Assistant at the Department of Mathematics and Statistics 
 - STAT 152 (Introduction to Statistics)
 - MATH 126 (Pre-Caclulus) 
-- MATH 182 (Caclulus-Recitation)
+- MATH 182 (Caclulus-Recitations)
 
 ## Publications
-
-My research contributes to the understanding and development of machine learning models in various applications. Here are some of my recent publications:
 
 - [The Nuances of Large-Language-Model-Agent Performance in Simple English Auctions](https://www.researchgate.net/publication/378140244_The_Nuances_of_Large-Language-Model-Agent_Performance_in_Simple_English_Auctions) 
 - [Understanding the Influence of Genre-Specific Music Using Network Analysis and Machine Learning Algorithms](https://www.mdpi.com/2504-2289/7/4/180)
 - [Do Large Language Models Show Human-like Biases? Exploring Confidence—Competence Gap in AI](https://www.mdpi.com/2078-2489/15/2/92)
 
-## On going projects/paper 
+## Ongoing projects/paper 
 
-- AI in Healthcare: LLMs' Self-Assement for Clinical Applications (pre-print)
+- AI in Healthcare: LLMs' Self-Assessment for Clinical Applications (pre-print)
 - Mapping the Future: Analyzing EV Charging Station Networks through Graph Machine Learning
 
 
@@ -46,7 +44,7 @@ My research contributes to the understanding and development of machine learning
 
 
 ## Blog
-[Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) 
+[Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) [AI Research For Good](https://www.airesearchforgood.org)
 
 ## Contact
 
