@@ -21,8 +21,8 @@ I am a Gradaute Teaching Assistant at the Department of Mathematics and Statisti
 
 My research contributes to the understanding and development of machine learning models in various applications. Here are some of my recent publications:
 
-- [Understanding the Influence of Genre-Specific Music Using Network Analysis and Machine Learning Algorithms](https://www.mdpi.com/2504-2289/7/4/180](https://www.mdpi.com/2504-2289/7/4/180)
-- [Do Large Language Models Show Human-like Biases? Exploring Confidence—Competence Gap in AI]([https://www.mdpi.com/2078-2489/15/2/92](https://www.mdpi.com/2078-2489/15/2/92)
+- [Understanding the Influence of Genre-Specific Music Using Network Analysis and Machine Learning Algorithms] (https://www.mdpi.com/2504-2289/7/4/180](https://www.mdpi.com/2504-2289/7/4/180)
+- [Do Large Language Models Show Human-like Biases? Exploring Confidence—Competence Gap in AI]([https://www.mdpi.com/2078-2489/15/2/92] (https://www.mdpi.com/2078-2489/15/2/92)
 
 ## Past Projects
 
