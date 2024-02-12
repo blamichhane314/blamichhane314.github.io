@@ -8,8 +8,8 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 
 - Graph Machine Learning
 - Network Science
+- Statistical Modeling
 - Evaluation of Large Language Models
-- Deep Learning Applications in Statistics
 
 
 ## Publications
