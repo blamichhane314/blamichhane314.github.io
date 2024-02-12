@@ -45,16 +45,19 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 - [Predictive Modeling using SAS- Loan Status Prediction](https://drive.google.com/file/d/1AleYJ916rduuBiROS0tdDmKoXAHl-TxS/view?usp=share_link)
 - [Insights into Network Science and Epidemic Modeling in Network Data](https://drive.google.com/file/d/1NYDL0OJl7_mQuKCtIgJtNUo31qxoW01U/view?usp=share_link)
 
-### COMAP
+### COMAP Mathematical Contest in Modeling([MCM](https://www.contest.comap.com/undergraduate/contests/)) 
 
-- 
+- [Gold and Bitcoin Portfolio Modeling, 2022](https://drive.google.com/file/d/1xftjrDIcdHBbYioAdFXh7kWbRrQsWtrr/view?usp=share_link), Meritorious Winner 
+- [Musical Influence Network, 2021](https://drive.google.com/file/d/1rW55gNR1pfPGLMU1mO7NfIJUJqUgJSdE/view?usp=share_link), Meritorious Winner
+- [Analyzing Plastic Waste Problem](https://drive.google.com/file/d/1G_zh8u8dzi1kN4I7EXj21vqOJY7xKAAA/view?usp=share_link), Honorable Mention
+- [Drones for Disaster: an Optimization Problem, 2019](https://drive.google.com/file/d/1epSLIp4k7kVPFBjb52NCsZms6u5b_UUT/view?usp=share_link), Successful Participant 
 
   
 ## Blog
 [Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) [AI Research For Good](https://www.airesearchforgood.org)
 
 ## Classes Taught
-I am a Graduate Teaching Assistant at the Department of Mathematics and Statistics 
+I am a Graduate Teaching Assistant at the Department of Mathematics and Statistics. 
 - STAT 152 (Introduction to Statistics)
 - MATH 126 (Pre-Caclulus) 
 - MATH 182 (Caclulus-Recitations)
