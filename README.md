@@ -41,20 +41,23 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 
 - [DriveOhio, Autonomous Vehicle Shuttle Service Planning, City of Youngstown](https://drive.google.com/file/d/1dOO87v9rxENTf36T3mYNYQ7Y96aAUuAs/view?usp=share_link)
 - [Optimization of Snowplow routes using ArcGIS and Data Analysis, City of Youngstown](https://drive.google.com/file/d/1z13Q6YpQUxOwi1Vhb39x1D4tKbLj2SVE/view?usp=share_link)
-- [E-commerce data classifcation using Supervised and Unsupervised Learning Algorithms](https://drive.google.com/file/d/1H-YPUSb_gpAhn12CvyQE-hojeCLI7uKd/view?usp=share_link)
+- [E-commerce data classification using Supervised and Unsupervised Learning Algorithms](https://drive.google.com/file/d/1H-YPUSb_gpAhn12CvyQE-hojeCLI7uKd/view?usp=share_link)
 - [Predictive Modeling using SAS- Loan Status Prediction](https://drive.google.com/file/d/1AleYJ916rduuBiROS0tdDmKoXAHl-TxS/view?usp=share_link)
 - [Insights into Network Science and Epidemic Modeling in Network Data](https://drive.google.com/file/d/1NYDL0OJl7_mQuKCtIgJtNUo31qxoW01U/view?usp=share_link)
+- [Ramsey Properties of Cayley Graphs](https://drive.google.com/file/d/1VbcHch2Luyk1ZT7CGTUtRGUnXF9Waq80/view?usp=share_link)
+- [Numerical Methods to Solve Initial Value Problem](https://drive.google.com/file/d/1rXN0zVkb5o79XPocqf88sCAsinY6diJ6/view?usp=share_link)
+- [Rio Grande Cubic Spline Interpolation](https://drive.google.com/file/d/1E24_1epSe8QT-ZMYdIRN0xgMz0Toos8L/view?usp=share_link)
 
 ### COMAP Mathematical Contest in Modeling([MCM](https://www.contest.comap.com/undergraduate/contests/)) 
 
 - [Gold and Bitcoin Portfolio Modeling, 2022](https://drive.google.com/file/d/1xftjrDIcdHBbYioAdFXh7kWbRrQsWtrr/view?usp=share_link), Meritorious Winner 
 - [Musical Influence Network, 2021](https://drive.google.com/file/d/1rW55gNR1pfPGLMU1mO7NfIJUJqUgJSdE/view?usp=share_link), Meritorious Winner
-- [Analyzing Plastic Waste Problem](https://drive.google.com/file/d/1G_zh8u8dzi1kN4I7EXj21vqOJY7xKAAA/view?usp=share_link), Honorable Mention
+- [Analyzing Plastic Waste Problem, 2020](https://drive.google.com/file/d/1G_zh8u8dzi1kN4I7EXj21vqOJY7xKAAA/view?usp=share_link), Honorable Mention
 - [Drones for Disaster: an Optimization Problem, 2019](https://drive.google.com/file/d/1epSLIp4k7kVPFBjb52NCsZms6u5b_UUT/view?usp=share_link), Successful Participant 
 
   
 ## Blog
-[Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) [AI Research For Good](https://www.airesearchforgood.org)
+[Medium](https://medium.com/@blamichhane314) | [Personal](https://eideticechoes.blogspot.com) | [AI Research For Good](https://www.airesearchforgood.org)  | [The Skeptics](https://meskeptic.wordpress.com)
 
 ## Classes Taught
 I am a Graduate Teaching Assistant at the Department of Mathematics and Statistics. 
