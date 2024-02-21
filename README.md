@@ -2,7 +2,7 @@
 
 ## About Me
 
-I am a second-year PhD student at the University of Nevada, Reno (Statistics and Data Science). 
+I am a second-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. 
 
 ## Research Interests
 
@@ -17,27 +17,26 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 - [The Nuances of Large-Language-Model-Agent Performance in Simple English Auctions](https://www.researchgate.net/publication/378140244_The_Nuances_of_Large-Language-Model-Agent_Performance_in_Simple_English_Auctions) 
 - [Understanding the Influence of Genre-Specific Music Using Network Analysis and Machine Learning Algorithms](https://www.mdpi.com/2504-2289/7/4/180)
 - [Do Large Language Models Show Human-like Biases? Exploring Confidence—Competence Gap in AI](https://www.mdpi.com/2078-2489/15/2/92)
+- [GPT-4's assessment of its performance in a USMLE-based case study](https://arxiv.org/abs/2402.09654) (preprint)
 
-## Ongoing projects/paper 
+## Ongoing papers
 
-- AI in Healthcare: LLMs' Self-Assessment for Clinical Applications (pre-print)
+- Stealth Assessment of Large Language Models using LeetCode challenges 
 - Mapping the Future: Analyzing EV Charging Station Networks through Graph Machine Learning
 
 
 
 ## Projects
 
-### LLM Agents in Social Network Dynamics: A Study on Information Flow and Propagation
-**Fall 2023**
+### [LLM Agents in Social Network Dynamics: A Study on Information Flow and Propagation](https://medium.com/@blamichhane314/llm-agents-in-social-network-dynamics-a-study-on-information-flow-6796d1107297) | **Fall 2023**
 
-- **Overview**: Developed a comprehensive framework aimed at analyzing the flow of information within social networks. This involved the use of generative agents to simulate social interactions, employing a modified Breadth-First Search (BFS) algorithm to structure these interactions efficiently. A scoring mechanism  was designed to evaluate the dynamics of information propagation within the network, providing insights into how information spreads in social settings powered by artificial agents.
+- **Overview**: Developed a framework aimed at analyzing the flow of information within social networks. This involved the use of generative agents to simulate social interactions, employing a modified Breadth-First Search (BFS) algorithm to structure these interactions efficiently. A scoring mechanism  was designed to evaluate the dynamics of information propagation within the network, providing insights into how information spreads in social settings powered by artificial agents.
 
-### [Exploring Relationships Between Network Properties: A Regression Analysis](https://drive.google.com/file/d/1zh2tkKHuKDTECH-Ijt_p2Sp3vEtIkHpu/view?usp=share_link)
-**Fall 2023**
+### [Exploring Relationships Between Network Properties: A Regression Analysis](https://drive.google.com/file/d/1zh2tkKHuKDTECH-Ijt_p2Sp3vEtIkHpu/view?usp=share_link) | **Fall 2023**
 
 - **Overview**: Conducted a detailed investigation into how various graph models and node properties influence the robustness of networks. This project focused on understanding the underlying dynamics that contribute to network stability and efficiency.
 
-### Past Projects 
+### Undergraduate Projects
 
 - [DriveOhio, Autonomous Vehicle Shuttle Service Planning, City of Youngstown](https://drive.google.com/file/d/1dOO87v9rxENTf36T3mYNYQ7Y96aAUuAs/view?usp=share_link)
 - [Optimization of Snowplow routes using ArcGIS and Data Analysis, City of Youngstown](https://drive.google.com/file/d/1z13Q6YpQUxOwi1Vhb39x1D4tKbLj2SVE/view?usp=share_link)
