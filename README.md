@@ -11,6 +11,7 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 - Statistical Modeling
 - Evaluation of Large Language Models
 
+[Projects](Projects.md)
 
 ## Publications
 
