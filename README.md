@@ -18,6 +18,7 @@
   <h2 style="font-family: 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: black; margin: 0;">Research Interests</h2>
 </div>
 
+<div style="display: flex; flex-direction: column; align-items: center; gap: 15px; margin: 20px auto; max-width: 800px;">
   <div style="background-color: #f9f3e6; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
     <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Network Science</p>
   </div>
@@ -27,10 +28,11 @@
   <div style="background-color: #f9f3e6; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
     <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Agent-Based Modeling and Simulation</p>
   </div>
-    <div style="background-color: #f9f3e6; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
+  <div style="background-color: #f9f3e6; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);">
     <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Evaluation of Large Language Models</p>
   </div>
 </div>
+
 
 
 
