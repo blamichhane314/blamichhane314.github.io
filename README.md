@@ -6,7 +6,6 @@
 </div>
 
 
-## About Me
 
 <div style="background-color: #f5f5eb; padding: 30px; border-radius: 10px; text-align: center; margin: 20px auto; max-width: 800px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
   <h2 style="font-family: 'Georgia', serif; font-size: 32px; font-weight: bold; color: black; margin-bottom: 20px;">About Me</h2>
@@ -17,10 +16,21 @@
 
 ## Research Interests
 
-- Graph Machine Learning
-- Network Science
-- Statistical Modeling
-- Evaluation of Large Language Models
+<div style="display: flex; flex-direction: column; align-items: center; gap: 20px; margin: 20px auto; max-width: 800px;">
+  <div style="background-color: #f5f5eb; padding: 20px; border-radius: 10px; text-align: center; width: 100%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <p style="font-family: 'Georgia', serif; font-size: 20px; font-weight: bold; color: black; margin: 0;">Graph Machine Learning</p>
+  </div>
+  <div style="background-color: #f5f5eb; padding: 20px; border-radius: 10px; text-align: center; width: 100%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <p style="font-family: 'Georgia', serif; font-size: 20px; font-weight: bold; color: black; margin: 0;">Network Science</p>
+  </div>
+  <div style="background-color: #f5f5eb; padding: 20px; border-radius: 10px; text-align: center; width: 100%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <p style="font-family: 'Georgia', serif; font-size: 20px; font-weight: bold; color: black; margin: 0;">Statistical Modeling</p>
+  </div>
+  <div style="background-color: #f5f5eb; padding: 20px; border-radius: 10px; text-align: center; width: 100%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <p style="font-family: 'Georgia', serif; font-size: 20px; font-weight: bold; color: black; margin: 0;">Evaluation of Large Language Models</p>
+  </div>
+</div>
+
 
 <div style="text-align: center; margin-top: 20px;">
   <strong><a href="Projects.md" style="margin-right: 20px; text-decoration: none; color: black;">Projects</a></strong>
