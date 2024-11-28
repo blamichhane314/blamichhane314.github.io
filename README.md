@@ -5,11 +5,15 @@
   <p style="font-family: 'Arial', sans-serif; font-size: 14px; margin: 0; color: #555;">Bishal Lamichhane</p>
 </div>
 
-# Bishal Lamichhane
 
 ## About Me
 
-I am a third-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. 
+<div style="background-color: #f5f5eb; padding: 30px; border-radius: 10px; text-align: center; margin: 20px auto; max-width: 800px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+  <h2 style="font-family: 'Georgia', serif; font-size: 32px; font-weight: bold; color: black; margin-bottom: 20px;">About Me</h2>
+  <p style="font-family: 'Arial', sans-serif; font-size: 18px; color: #333; line-height: 1.6; margin: 0;">
+    I am a third-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. My research explores graph learning, network science, and information propagation in networks using advanced statistical and machine learning methods.
+  </p>
+</div>
 
 ## Research Interests
 
