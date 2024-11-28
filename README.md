@@ -1,8 +1,15 @@
+<div style="background-color: beige; padding: 20px; text-align: center; border-radius: 8px;">
+  <h1 style="font-size: 72px; font-family: 'Georgia', serif; font-weight: bold; margin: 0; color: black;">
+    YES.
+  </h1>
+  <p style="font-family: 'Arial', sans-serif; font-size: 14px; margin: 0; color: #555;">Bishal Lamichhane</p>
+</div>
+
 # Bishal Lamichhane
 
 ## About Me
 
-I am a second-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. 
+I am a third-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. 
 
 ## Research Interests
 
@@ -11,7 +18,15 @@ I am a second-year PhD student at the University of Nevada, Reno (Statistics and
 - Statistical Modeling
 - Evaluation of Large Language Models
 
-**[Projects](Projects.md)** | **[Publications](Publications.md)** | **[Education](Education.md)** | **[Blog](Blogs.md)** 
+<div style="text-align: center; margin-top: 20px;">
+  <strong><a href="Projects.md" style="margin-right: 20px; text-decoration: none; color: black;">Projects</a></strong>
+  |
+  <strong><a href="Publications.md" style="margin-left: 20px; text-decoration: none; color: black;">Publications</a></strong>
+  |
+  <strong><a href="Education.md" style="margin-left: 20px; text-decoration: none; color: black;">Education</a></strong>
+  |
+  <strong><a href="Blogs.md" style="margin-left: 20px; text-decoration: none; color: black;">Blog</a></strong>
+</div>
 
 ## Recent 
 
