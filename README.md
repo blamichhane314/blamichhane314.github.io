@@ -6,38 +6,16 @@
 </div>
 
 
-
-<div style="background-color: #f5f5eb; padding: 30px; border-radius: 10px; text-align: center; margin: 20px auto; max-width: 800px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-  <h2 style="font-family: 'Georgia', serif; font-size: 32px; font-weight: bold; color: black; margin-bottom: 20px;">About Me</h2>
-  <p style="font-family: 'Arial', sans-serif; font-size: 18px; color: #333; line-height: 1.6; margin: 0;">
-    I am a third-year PhD student at the University of Nevada, Reno (Statistics and Data Science). I graduated with a Bachelor's degree in Mathematics from Youngstown State University in 2022. My research explores graph learning, network science, and information propagation in networks using advanced statistical and machine learning methods.
+<div style="background-color: #f9f3e6; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 800px; text-align: center;">
+  <h2 style="font-family: 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: black; margin-bottom: 20px;">Research Interests</h2>
+  <p style="font-family: 'Times New Roman', serif; font-size: 18px; color: black; line-height: 1.8; margin: 0;">
+    Network Science<br>
+    Information Flow in Networks<br>
+    Agent-Based Modeling and Simulation<br>
+    Evaluation of Large Language Models
   </p>
 </div>
 
-<div style="background-color: #f9f3e6; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); margin: 20px auto; max-width: 800px;">
-
-  <!-- Title Section -->
-  <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
-    <h2 style="font-family: 'Times New Roman', serif; font-size: 24px; font-weight: bold; color: black; margin: 0;">Research Interests</h2>
-  </div>
-
-  <!-- List of Interests -->
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-    <div style="background-color: #ffffff; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);">
-      <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Network Science</p>
-    </div>
-    <div style="background-color: #ffffff; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);">
-      <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Information Flow in Networks</p>
-    </div>
-    <div style="background-color: #ffffff; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);">
-      <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Agent-Based Modeling and Simulation</p>
-    </div>
-    <div style="background-color: #ffffff; padding: 10px; border-radius: 8px; text-align: center; width: 100%; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);">
-      <p style="font-family: 'Times New Roman', serif; font-size: 18px; font-weight: bold; color: black; margin: 0;">Evaluation of Large Language Models</p>
-    </div>
-  </div>
-
-</div>
 
 
 
