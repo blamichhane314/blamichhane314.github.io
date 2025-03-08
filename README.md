@@ -22,7 +22,7 @@
 
 
 <div style="text-align: center; margin-top: 20px;">
-  <strong><a href="Projects.md" style="margin-right: 20px; text-decoration: none; color: black;">Projects</a></strong>
+  <strong><a href="https://blamichhane314.github.io/Projects.html" style="margin-right: 20px; text-decoration: none; color: black;">Projects</a></strong>
   |
   <strong><a href="Publications.md" style="margin-left: 20px; text-decoration: none; color: black;">Publications</a></strong>
   |
