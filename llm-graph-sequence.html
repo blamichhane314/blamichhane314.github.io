@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sequence Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./module-pages.css" />
+</head>
+<body>
+  <div class="module-shell">
+    <header class="module-toolbar">
+      <a class="toolbar-link" href="./index.html">Back to Home</a>
+      <div class="toolbar-center">
+        <span class="toolbar-title">Sequence Viewer</span>
+        <span class="toolbar-subtitle">LLM Graph Generation / Sequential Edge Emission</span>
+      </div>
+      <a class="toolbar-chip" href="./research.html">Research Page</a>
+    </header>
+
+    <main class="module-main">
+      <section class="panel hero-panel">
+        <div class="panel-head">
+          <span>Module 02</span>
+          <span>Generative Models</span>
+        </div>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Sequential graph generation</p>
+            <h1>Watch a graph form one edge at a time.</h1>
+            <p>
+              A prototype viewer for sequential graph generation. The emphasis is on order effects:
+              the partial graph, the currently emitted edge, and the way local motifs accumulate as
+              the sequence unfolds.
+            </p>
+          </div>
+
+          <aside class="hero-meta">
+            <article class="meta-card">
+              <p class="panel-label">Current Scope</p>
+              <h2>Edge-by-edge playback</h2>
+              <p>Compare different generation regimes and watch how the structure accumulates over time.</p>
+            </article>
+
+            <article class="meta-card">
+              <p class="panel-label">Use</p>
+              <h2>Read the graph first</h2>
+              <p>The log and notes are support layers; the animation field carries the main idea.</p>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stat-grid">
+        <article class="stat-card">
+          <div class="metric-label">Preset</div>
+          <div class="metric-value" id="seq-preset-stat">--</div>
+          <div class="metric-note">generation regime</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Step</div>
+          <div class="metric-value" id="seq-step-stat">--</div>
+          <div class="metric-note">current emission index</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Edges</div>
+          <div class="metric-value" id="seq-edge-stat">--</div>
+          <div class="metric-note">emitted so far</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Density</div>
+          <div class="metric-value" id="seq-density-stat">--</div>
+          <div class="metric-note">partial graph density</div>
+        </article>
+      </section>
+
+      <section class="workbench-grid">
+        <article class="surface-panel">
+          <div class="panel-head">
+            <span>Playback Surface</span>
+            <span id="sequence-caption">running partial graph</span>
+          </div>
+          <div class="graph-stage">
+            <svg id="sequence-canvas" viewBox="0 0 960 620" aria-label="Sequential graph generation canvas"></svg>
+          </div>
+        </article>
+
+        <aside class="side-panel">
+          <article class="control-card">
+            <p class="panel-label">Playback</p>
+            <h2>Sequence controls</h2>
+            <p>Switch generation presets, change speed, and step through the edge sequence.</p>
+
+            <label>
+              <span class="select-line"><span>Preset</span><span class="range-value" id="preset-label">Hub First</span></span>
+              <select id="sequence-preset">
+                <option value="hub">Hub First</option>
+                <option value="triangles">Triangle Bias</option>
+                <option value="blocks">Block Structure</option>
+                <option value="chain">Progressive Chain</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="range-line"><span>Nodes</span><span class="range-value" id="sequence-node-count-value">12</span></span>
+              <input id="sequence-node-count" type="range" min="8" max="16" step="1" value="12" />
+            </label>
+
+            <label>
+              <span class="range-line"><span>Speed</span><span class="range-value" id="sequence-speed-value">0.75 s</span></span>
+              <input id="sequence-speed" type="range" min="250" max="1400" step="50" value="750" />
+            </label>
+
+            <div class="button-row">
+              <button class="module-button primary" id="sequence-play-toggle" type="button">Pause</button>
+              <button class="module-button" id="sequence-step" type="button">Step</button>
+              <button class="module-button" id="sequence-reset" type="button">Reset</button>
+            </div>
+          </article>
+
+          <article class="log-card">
+            <p class="panel-label">Sequence Log</p>
+            <h2 id="sequence-status-title">Current emission</h2>
+            <div class="status-line">
+              <span class="status-chip" id="sequence-status-chip">Running</span>
+              <span class="status-chip" id="sequence-length-chip">0 of 0</span>
+            </div>
+            <ol class="sequence-log" id="sequence-log"></ol>
+          </article>
+
+          <article class="log-card">
+            <p class="panel-label">Interpretation</p>
+            <h2>What the presets suggest</h2>
+            <ul class="summary-list" id="preset-notes"></ul>
+          </article>
+        </aside>
+      </section>
+
+      <p class="footer-note">
+        Next layer: connect the viewer to real LLM traces and compare emission order, prompt context, and final graph structure.
+      </p>
+    </main>
+  </div>
+
+  <script src="./llm-graph-sequence.js"></script>
+</body>
+</html>

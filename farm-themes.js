@@ -1,0 +1,72 @@
+// themes.jsx — color themes for the farm
+// Each theme exports CSS vars + raw color values used by canvas/SVG code.
+
+const THEMES = {
+  paper: {
+    label: 'Paper',
+    bg: 'oklch(0.975 0.004 80)',
+    bg2: 'oklch(0.955 0.004 80)',
+    ink: 'rgba(42, 44, 56, 1)',
+    inkStrong: 'rgba(42, 44, 56, 0.9)',
+    inkMid: 'rgba(42, 44, 56, 0.55)',
+    inkFaint: 'rgba(42, 44, 56, 0.28)',
+    inkGhost: 'rgba(42, 44, 56, 0.1)',
+    inkA: 0.92, // for canvas hexInk() base
+    inkRgb: '42, 44, 56',
+    panelBg: 'rgba(249, 247, 242, 0.72)',
+  },
+  blueprint: {
+    label: 'Blueprint',
+    bg: 'oklch(0.32 0.06 240)',
+    bg2: 'oklch(0.28 0.07 240)',
+    ink: 'rgba(220, 232, 255, 1)',
+    inkStrong: 'rgba(220, 232, 255, 0.92)',
+    inkMid: 'rgba(220, 232, 255, 0.6)',
+    inkFaint: 'rgba(220, 232, 255, 0.3)',
+    inkGhost: 'rgba(220, 232, 255, 0.1)',
+    inkA: 0.95,
+    inkRgb: '220, 232, 255',
+    panelBg: 'rgba(20, 40, 80, 0.55)',
+  },
+  terminal: {
+    label: 'Terminal',
+    bg: 'oklch(0.18 0.02 140)',
+    bg2: 'oklch(0.15 0.02 140)',
+    ink: 'rgba(170, 240, 180, 1)',
+    inkStrong: 'rgba(170, 240, 180, 0.92)',
+    inkMid: 'rgba(170, 240, 180, 0.6)',
+    inkFaint: 'rgba(170, 240, 180, 0.3)',
+    inkGhost: 'rgba(170, 240, 180, 0.1)',
+    inkA: 0.95,
+    inkRgb: '170, 240, 180',
+    panelBg: 'rgba(10, 30, 20, 0.55)',
+  },
+  amber: {
+    label: 'Amber',
+    bg: 'oklch(0.16 0.02 60)',
+    bg2: 'oklch(0.13 0.02 60)',
+    ink: 'rgba(255, 190, 110, 1)',
+    inkStrong: 'rgba(255, 190, 110, 0.92)',
+    inkMid: 'rgba(255, 190, 110, 0.6)',
+    inkFaint: 'rgba(255, 190, 110, 0.3)',
+    inkGhost: 'rgba(255, 190, 110, 0.1)',
+    inkA: 0.95,
+    inkRgb: '255, 190, 110',
+    panelBg: 'rgba(30, 18, 10, 0.6)',
+  },
+  mono: {
+    label: 'Mono Dark',
+    bg: 'oklch(0.22 0.005 260)',
+    bg2: 'oklch(0.18 0.005 260)',
+    ink: 'rgba(240, 240, 245, 1)',
+    inkStrong: 'rgba(240, 240, 245, 0.92)',
+    inkMid: 'rgba(240, 240, 245, 0.58)',
+    inkFaint: 'rgba(240, 240, 245, 0.28)',
+    inkGhost: 'rgba(240, 240, 245, 0.1)',
+    inkA: 0.95,
+    inkRgb: '240, 240, 245',
+    panelBg: 'rgba(30, 30, 38, 0.6)',
+  },
+};
+
+Object.assign(window, { THEMES });

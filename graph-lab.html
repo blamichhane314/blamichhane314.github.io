@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Graph Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./module-pages.css" />
+</head>
+<body>
+  <div class="module-shell">
+    <header class="module-toolbar">
+      <a class="toolbar-link" href="./index.html">Back to Home</a>
+      <div class="toolbar-center">
+        <span class="toolbar-title">Graph Lab</span>
+        <span class="toolbar-subtitle">Simulator / Distance Diagnostics / Metric Space View</span>
+      </div>
+      <a class="toolbar-chip" href="./research.html">Research Page</a>
+    </header>
+
+    <main class="module-main">
+      <section class="panel hero-panel">
+        <div class="panel-head">
+          <span>Module 01</span>
+          <span>Graph-Valued Inference</span>
+        </div>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Graph simulator and distance calculator</p>
+            <h1>Generate a graph, select two nodes, inspect the geometry.</h1>
+            <p>
+              A local prototype for the graph-valued inference direction. The current surface
+              focuses on graph generation, shortest-path structure, and simple node-level
+              diagnostics as an entry point to richer graph-space comparisons.
+            </p>
+          </div>
+
+          <aside class="hero-meta">
+            <article class="meta-card">
+              <p class="panel-label">Current Scope</p>
+              <h2>Interactive graph surface</h2>
+              <p>Switch graph families, compare node pairs, and inspect how local structure changes across regimes.</p>
+            </article>
+
+            <article class="meta-card">
+              <p class="panel-label">Use</p>
+              <h2>Start with the graph field</h2>
+              <p>The controls and notes are secondary. The graph should be the main reading surface.</p>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="stat-grid">
+        <article class="stat-card">
+          <div class="metric-label">Nodes</div>
+          <div class="metric-value" id="stat-node-count">--</div>
+          <div class="metric-note">current graph order</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Edges</div>
+          <div class="metric-value" id="stat-edge-count">--</div>
+          <div class="metric-note">undirected links</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Components</div>
+          <div class="metric-value" id="stat-components">--</div>
+          <div class="metric-note">connected pieces</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Avg Path</div>
+          <div class="metric-value" id="stat-average-path">--</div>
+          <div class="metric-note">reachable pairs only</div>
+        </article>
+      </section>
+
+      <section class="workbench-grid">
+        <article class="surface-panel">
+          <div class="panel-head">
+            <span>Workbench</span>
+            <span id="surface-caption">click nodes to reset source and target</span>
+          </div>
+          <div class="graph-stage">
+            <svg id="graph-lab-canvas" viewBox="0 0 960 620" aria-label="Graph Lab canvas"></svg>
+          </div>
+        </article>
+
+        <aside class="side-panel">
+          <article class="control-card">
+            <p class="panel-label">Generator</p>
+            <h2>Graph controls</h2>
+            <p>Switch graph families, tune the size and density, then compare two selected nodes.</p>
+
+            <label>
+              <span class="select-line"><span>Graph family</span><span class="range-value" id="graph-model-label">Erdos-Renyi</span></span>
+              <select id="graph-model">
+                <option value="er">Erdos-Renyi</option>
+                <option value="sbm">Stochastic block model</option>
+                <option value="lattice">Ring lattice</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="range-line"><span>Nodes</span><span class="range-value" id="node-count-value">14</span></span>
+              <input id="graph-node-count" type="range" min="8" max="22" step="1" value="14" />
+            </label>
+
+            <label>
+              <span class="range-line"><span>Density</span><span class="range-value" id="density-value">28%</span></span>
+              <input id="graph-density" type="range" min="12" max="60" step="1" value="28" />
+            </label>
+
+            <label>
+              <span class="select-line"><span>Source node</span><span class="range-value" id="source-label">A01</span></span>
+              <select id="graph-source"></select>
+            </label>
+
+            <label>
+              <span class="select-line"><span>Target node</span><span class="range-value" id="target-label">A02</span></span>
+              <select id="graph-target"></select>
+            </label>
+
+            <div class="button-row">
+              <button class="module-button primary" id="graph-regenerate" type="button">Regenerate</button>
+              <button class="module-button" id="graph-shuffle-pair" type="button">Shuffle Pair</button>
+            </div>
+          </article>
+
+          <article class="log-card">
+            <p class="panel-label">Distance Diagnostics</p>
+            <h2 id="distance-title">A01 to A02</h2>
+            <ul class="distance-list">
+              <li id="distance-shortest">Shortest path: --</li>
+              <li id="distance-degree-gap">Degree difference: --</li>
+              <li id="distance-common-neighbors">Common neighbors: --</li>
+              <li id="distance-membership">Community relation: --</li>
+            </ul>
+            <div class="status-line">
+              <span class="status-chip" id="path-chip">Path unresolved</span>
+              <span class="status-chip" id="density-chip">Density --</span>
+            </div>
+          </article>
+
+          <article class="log-card">
+            <p class="panel-label">Notes</p>
+            <h2>Why this module</h2>
+            <ul class="summary-list">
+              <li>Graph-valued data does not admit a single universal Euclidean summary.</li>
+              <li>Choice of inference depends on the geometry, size, sparsity, and labeling regime of the graph space.</li>
+              <li>This prototype foregrounds path-based and neighborhood-based structure as an entry point for richer graph distances.</li>
+            </ul>
+          </article>
+        </aside>
+      </section>
+
+      <p class="footer-note">
+        Next layer: graph-space summaries, distance matrices, and comparative experiments across generators.
+      </p>
+    </main>
+  </div>
+
+  <script src="./graph-lab.js"></script>
+</body>
+</html>
