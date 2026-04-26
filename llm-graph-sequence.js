@@ -177,31 +177,6 @@
     return positions;
   }
 
-  function buildRunNodeOrder(edges, promptOrder) {
-    const seen = new Set();
-    const order = [];
-
-    edges.forEach((edge) => {
-      if (!seen.has(edge.source)) {
-        seen.add(edge.source);
-        order.push(edge.source);
-      }
-      if (!seen.has(edge.target)) {
-        seen.add(edge.target);
-        order.push(edge.target);
-      }
-    });
-
-    promptOrder.forEach((id) => {
-      if (!seen.has(id)) {
-        seen.add(id);
-        order.push(id);
-      }
-    });
-
-    return order;
-  }
-
   async function loadBaseData() {
     const [
       nodesCsv,
@@ -355,8 +330,6 @@
     run.modelLabel = meta.modelLabel;
     run.runLabel = meta.runLabel;
     run.promptKey = promptKey;
-    run.nodeOrder = buildRunNodeOrder(run.edges, state.data.prompts[promptKey].order);
-    run.positions = buildCircularPositions(run.nodeOrder);
     state.runCache.set(cacheKey, run);
     return run;
   }
@@ -513,8 +486,7 @@
       return;
     }
 
-    const run = currentRun();
-    const positions = run?.positions || state.data.positionsByPrompt[state.promptKey];
+    const positions = state.data.positionsByPrompt[state.promptKey];
     const emitted = emittedEdges();
     const current = currentEdge();
     const maxWeight = Math.max(...state.data.groundTruthEdges.map((edge) => edge.weight), 1);
@@ -624,7 +596,7 @@
       `<li>${counts.correct} correct emitted edges currently recover ${coverage.toFixed(1)}% of the ground-truth graph.</li>`,
       `<li>${counts.hallucinated} emitted edges are hallucinated, giving ${precision.toFixed(1)}% precision among valid emitted edges so far.</li>`,
       `<li>${skippedTotal} raw outputs were skipped during sanitization (${skipped.invalidIds} invalid IDs, ${skipped.duplicates} duplicates, ${skipped.malformed} malformed, ${skipped.selfLoops} self-loops).</li>`,
-      `<li>The node layout follows first appearance in the selected LLM run, with remaining unseen nodes appended using the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order.</li>`,
+      `<li>The node layout follows the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order on a fixed circular ring, while the edge sequence follows the model's raw emitted output after sanitization.</li>`,
     ].join("");
   }
 
