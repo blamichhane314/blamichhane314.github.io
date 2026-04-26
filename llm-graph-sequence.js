@@ -41,6 +41,7 @@
 
   const state = {
     promptKey: "default",
+    modelKey: null,
     runFile: PROMPTS.default.runs[0],
     speed: 750,
     playing: true,
@@ -52,6 +53,7 @@
 
   const canvas = document.getElementById("sequence-canvas");
   const promptOrderSelect = document.getElementById("prompt-order");
+  const modelSelect = document.getElementById("sequence-model");
   const runSelect = document.getElementById("sequence-run");
   const speedInput = document.getElementById("sequence-speed");
   const playToggleButton = document.getElementById("sequence-play-toggle");
@@ -59,6 +61,7 @@
   const resetButton = document.getElementById("sequence-reset");
 
   const promptOrderLabel = document.getElementById("prompt-order-label");
+  const modelLabel = document.getElementById("model-label");
   const runLabel = document.getElementById("run-label");
   const speedValue = document.getElementById("sequence-speed-value");
   const sequenceCaption = document.getElementById("sequence-caption");
@@ -71,11 +74,22 @@
   const promptMeta = document.getElementById("prompt-meta");
   const promptText = document.getElementById("prompt-text");
 
+  const seqModelStat = document.getElementById("seq-model-stat");
   const seqRunStat = document.getElementById("seq-run-stat");
   const seqPromptStat = document.getElementById("seq-prompt-stat");
   const seqStepStat = document.getElementById("seq-step-stat");
   const seqCorrectStat = document.getElementById("seq-correct-stat");
   const seqHallucinatedStat = document.getElementById("seq-hallucinated-stat");
+
+  const MODEL_PATTERNS = [
+    ["gpt_5.2_thinking_with_internet", "gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
+    ["gpt_5.2_thinking_rev", "gpt_5.2_thinking_rev", "GPT-5.2 thinking rev"],
+    ["gpt_5.2_thinking", "gpt_5.2_thinking", "GPT-5.2 thinking"],
+    ["claude_sonnet_4.6_extendedthinking", "claude_sonnet_4.6_extendedthinking", "Claude Sonnet 4.6 extended thinking"],
+    ["gemini_3_thinking", "gemini_3_thinking", "Gemini 3 thinking"],
+    ["gptoss_120b_hight", "gptoss_120b_hight", "gpt-oss 120b high-t"],
+    ["gptoss_120b_low", "gptoss_120b_low", "gpt-oss 120b low"],
+  ];
 
   function edgeKey(a, b) {
     return a < b ? `${a}::${b}` : `${b}::${a}`;
@@ -89,34 +103,34 @@
     return value.replace(/\b[a-z]/g, (match) => match.toUpperCase());
   }
 
-  function formatRunLabel(fileName) {
+  function extractRunMeta(fileName) {
     const bare = fileName.replace(/\.json$/i, "");
-    const parts = bare.split("_");
-    const repIndex = parts.findIndex((part) => /^rep\d+/i.test(part) || /^rep\d+\w*/i.test(part));
-    let modelPart = repIndex >= 0 ? parts.slice(0, repIndex).join("_") : bare;
-    const repPart = repIndex >= 0 ? parts.slice(repIndex).join(" ") : "";
-
-    const replacements = [
-      ["gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
-      ["gpt_5.2_thinking_rev", "GPT-5.2 thinking rev"],
-      ["gpt_5.2_thinking", "GPT-5.2 thinking"],
-      ["claude_sonnet_4.6_extendedthinking", "Claude Sonnet 4.6 extended thinking"],
-      ["gemini_3_thinking", "Gemini 3 thinking"],
-      ["gptoss_120b_hight", "gpt-oss 120b high-t"],
-      ["gptoss_120b_low", "gpt-oss 120b low"],
-    ];
-
-    replacements.forEach(([source, target]) => {
-      if (modelPart === source) {
-        modelPart = target;
+    let modelKey = bare;
+    let modelLabelText = titleCase(bare.replace(/_/g, " "));
+    for (const [prefix, key, label] of MODEL_PATTERNS) {
+      if (bare.startsWith(prefix)) {
+        modelKey = key;
+        modelLabelText = label;
+        break;
       }
-    });
-
-    if (modelPart.includes("_")) {
-      modelPart = titleCase(modelPart.replace(/_/g, " "));
     }
 
-    return repPart ? `${modelPart} / ${repPart}` : modelPart;
+    let runLabelText = "run";
+    const repMatch = bare.match(/_(rep\d+\w*)$/i);
+    if (repMatch) {
+      runLabelText = repMatch[1].replace(/^rep/i, "rep ");
+    } else {
+      const parts = bare.split("_");
+      runLabelText = parts[parts.length - 1];
+    }
+
+    return {
+      fileName,
+      modelKey,
+      modelLabel: modelLabelText,
+      runLabel: runLabelText,
+      fullLabel: `${modelLabelText} / ${runLabelText}`,
+    };
   }
 
   function parseCsv(text) {
@@ -314,6 +328,25 @@
     };
   }
 
+  function promptRunMeta(promptKey) {
+    return PROMPTS[promptKey].runs.map((fileName) => extractRunMeta(fileName));
+  }
+
+  function modelEntriesForPrompt(promptKey) {
+    const grouped = new Map();
+    promptRunMeta(promptKey).forEach((meta) => {
+      if (!grouped.has(meta.modelKey)) {
+        grouped.set(meta.modelKey, {
+          modelKey: meta.modelKey,
+          modelLabel: meta.modelLabel,
+          runs: [],
+        });
+      }
+      grouped.get(meta.modelKey).runs.push(meta);
+    });
+    return [...grouped.values()];
+  }
+
   function sanitizeRun(rawEdges, data) {
     const validEdges = [];
     const seen = new Set();
@@ -373,8 +406,12 @@
 
     const raw = await fetchJson(`${DATA_ROOT}/llm_calls/${PROMPTS[promptKey].runDir}/${runFile}`);
     const run = sanitizeRun(raw.edges, state.data);
+    const meta = extractRunMeta(runFile);
     run.fileName = runFile;
-    run.label = formatRunLabel(runFile);
+    run.label = meta.fullLabel;
+    run.modelKey = meta.modelKey;
+    run.modelLabel = meta.modelLabel;
+    run.runLabel = meta.runLabel;
     run.promptKey = promptKey;
     state.runCache.set(cacheKey, run);
     return run;
@@ -425,15 +462,57 @@
       : 0;
   }
 
+  function currentPromptModels() {
+    return modelEntriesForPrompt(state.promptKey);
+  }
+
+  function availableRunsForCurrentModel() {
+    const entry = currentPromptModels().find((item) => item.modelKey === state.modelKey);
+    return entry ? entry.runs : [];
+  }
+
+  function syncModelAndRunState() {
+    const models = currentPromptModels();
+    if (!models.length) {
+      state.modelKey = null;
+      state.runFile = null;
+      return;
+    }
+
+    if (!models.some((item) => item.modelKey === state.modelKey)) {
+      state.modelKey = models[0].modelKey;
+    }
+
+    const runs = availableRunsForCurrentModel();
+    if (!runs.some((item) => item.fileName === state.runFile)) {
+      state.runFile = runs[0]?.fileName || null;
+    }
+  }
+
+  function populateModelSelect() {
+    syncModelAndRunState();
+    const options = currentPromptModels()
+      .map((entry) => {
+        const selected = entry.modelKey === state.modelKey ? " selected" : "";
+        return `<option value="${entry.modelKey}"${selected}>${entry.modelLabel}</option>`;
+      })
+      .join("");
+    modelSelect.innerHTML = options;
+    const activeModel = currentPromptModels().find((item) => item.modelKey === state.modelKey);
+    modelLabel.textContent = activeModel ? activeModel.modelLabel : "--";
+  }
+
   function populateRunSelect() {
-    const options = PROMPTS[state.promptKey].runs
-      .map((file) => {
-        const selected = file === state.runFile ? " selected" : "";
-        return `<option value="${file}"${selected}>${formatRunLabel(file)}</option>`;
+    syncModelAndRunState();
+    const options = availableRunsForCurrentModel()
+      .map((meta) => {
+        const selected = meta.fileName === state.runFile ? " selected" : "";
+        return `<option value="${meta.fileName}"${selected}>${meta.runLabel}</option>`;
       })
       .join("");
     runSelect.innerHTML = options;
-    runLabel.textContent = formatRunLabel(state.runFile);
+    const activeRun = availableRunsForCurrentModel().find((item) => item.fileName === state.runFile);
+    runLabel.textContent = activeRun ? activeRun.runLabel : "--";
     promptOrderLabel.textContent = PROMPTS[state.promptKey].label;
   }
 
@@ -594,13 +673,15 @@
     const current = currentEdge();
     const precision = precisionFor(counts);
 
-    seqRunStat.textContent = run.label;
+    seqModelStat.textContent = run.modelLabel;
+    seqRunStat.textContent = run.runLabel;
     seqPromptStat.textContent = PROMPTS[state.promptKey].label;
     seqStepStat.textContent = `${state.step}/${run.edges.length}`;
     seqCorrectStat.textContent = String(counts.correct);
     seqHallucinatedStat.textContent = String(counts.hallucinated);
 
-    runLabel.textContent = run.label;
+    modelLabel.textContent = run.modelLabel;
+    runLabel.textContent = run.runLabel;
     promptOrderLabel.textContent = PROMPTS[state.promptKey].label;
     speedValue.textContent = `${(state.speed / 1000).toFixed(2)} s`;
 
@@ -682,7 +763,16 @@
 
   promptOrderSelect.addEventListener("change", async () => {
     state.promptKey = promptOrderSelect.value;
-    state.runFile = PROMPTS[state.promptKey].runs[0];
+    state.modelKey = null;
+    state.runFile = null;
+    populateModelSelect();
+    populateRunSelect();
+    await resetRun({ keepPlaying: false });
+  });
+
+  modelSelect.addEventListener("change", async () => {
+    state.modelKey = modelSelect.value;
+    state.runFile = null;
     populateRunSelect();
     await resetRun({ keepPlaying: false });
   });
@@ -732,6 +822,7 @@
     try {
       state.data = await loadBaseData();
       promptOrderSelect.value = state.promptKey;
+      populateModelSelect();
       populateRunSelect();
       await resetRun({ keepPlaying: true });
     } catch (error) {

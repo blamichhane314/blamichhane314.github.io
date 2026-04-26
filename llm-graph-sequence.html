@@ -56,9 +56,15 @@
 
       <section class="stat-grid">
         <article class="stat-card">
+          <div class="metric-label">Model</div>
+          <div class="metric-value" id="seq-model-stat">--</div>
+          <div class="metric-note">selected model family</div>
+        </article>
+
+        <article class="stat-card">
           <div class="metric-label">Run</div>
           <div class="metric-value" id="seq-run-stat">--</div>
-          <div class="metric-note">selected LLM output</div>
+          <div class="metric-note">selected replication</div>
         </article>
 
         <article class="stat-card">
@@ -100,7 +106,7 @@
         <aside class="side-panel sequence-side-panel">
           <article class="control-card">
             <p class="panel-label">Run Controls</p>
-            <h2>Select prompt, run, and playback speed</h2>
+            <h2>Select prompt order, model, run, and playback speed</h2>
             <p>Prompt text can stay collapsed until needed.</p>
 
             <label>
@@ -109,6 +115,11 @@
                 <option value="default">Default</option>
                 <option value="reverse">Reverse</option>
               </select>
+            </label>
+
+            <label>
+              <span class="select-line"><span>Model</span><span class="range-value" id="model-label">--</span></span>
+              <select id="sequence-model"></select>
             </label>
 
             <label>
