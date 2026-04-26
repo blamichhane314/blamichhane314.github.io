@@ -95,10 +95,6 @@
     return a < b ? `${a}::${b}` : `${b}::${a}`;
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
   function titleCase(value) {
     return value.replace(/\b[a-z]/g, (match) => match.toUpperCase());
   }
@@ -164,126 +160,21 @@
     return response.text();
   }
 
-  function buildInitialAnchors(order) {
+  function buildCircularPositions(order) {
     const cx = bounds.width / 2;
     const cy = bounds.height / 2;
-    const rx = 330;
-    const ry = 228;
-    const anchors = new Map();
+    const radius = Math.min(bounds.width, bounds.height) * 0.38;
+    const positions = new Map();
 
     order.forEach((id, index) => {
       const angle = -Math.PI / 2 + (Math.PI * 2 * index) / order.length;
-      const radialShift = 0.92 + 0.08 * Math.sin(index * 0.67);
-      anchors.set(id, {
-        x: cx + Math.cos(angle) * rx * radialShift,
-        y: cy + Math.sin(angle) * ry * radialShift,
+      positions.set(id, {
+        x: cx + Math.cos(angle) * radius,
+        y: cy + Math.sin(angle) * radius,
       });
     });
 
-    return anchors;
-  }
-
-  function normalizePositions(positions, margin = 88) {
-    const entries = [...positions.values()];
-    const xs = entries.map((item) => item.x);
-    const ys = entries.map((item) => item.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const width = Math.max(1, maxX - minX);
-    const height = Math.max(1, maxY - minY);
-    const scale = Math.min(
-      (bounds.width - margin * 2) / width,
-      (bounds.height - margin * 2) / height
-    );
-
-    const normalized = new Map();
-    positions.forEach((position, key) => {
-      normalized.set(key, {
-        x: margin + (position.x - minX) * scale,
-        y: margin + (position.y - minY) * scale,
-      });
-    });
-
-    return normalized;
-  }
-
-  function relaxLayout(nodes, edges, anchors, weightByNode) {
-    const positions = new Map();
-    nodes.forEach((node) => {
-      const anchor = anchors.get(node.id);
-      positions.set(node.id, {
-        x: anchor.x,
-        y: anchor.y,
-        ax: anchor.x,
-        ay: anchor.y,
-        vx: 0,
-        vy: 0,
-      });
-    });
-
-    const maxWeight = Math.max(...edges.map((edge) => edge.weight), 1);
-
-    for (let iteration = 0; iteration < 220; iteration += 1) {
-      nodes.forEach((node) => {
-        const position = positions.get(node.id);
-        position.vx = 0;
-        position.vy = 0;
-      });
-
-      for (let i = 0; i < nodes.length; i += 1) {
-        for (let j = i + 1; j < nodes.length; j += 1) {
-          const a = positions.get(nodes[i].id);
-          const b = positions.get(nodes[j].id);
-          let dx = b.x - a.x;
-          let dy = b.y - a.y;
-          let distSq = dx * dx + dy * dy;
-          if (distSq < 1) {
-            dx = 0.5;
-            dy = 0.5;
-            distSq = dx * dx + dy * dy;
-          }
-          const dist = Math.sqrt(distSq);
-          const repulsion = 2800 / distSq;
-          const fx = (dx / dist) * repulsion;
-          const fy = (dy / dist) * repulsion;
-          a.vx -= fx;
-          a.vy -= fy;
-          b.vx += fx;
-          b.vy += fy;
-        }
-      }
-
-      edges.forEach((edge) => {
-        const a = positions.get(edge.source);
-        const b = positions.get(edge.target);
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist = Math.max(1, Math.hypot(dx, dy));
-        const weightRatio = edge.weight / maxWeight;
-        const idealLength = 118 - 52 * Math.sqrt(weightRatio);
-        const spring = (dist - idealLength) * (0.01 + 0.01 * weightRatio);
-        const fx = (dx / dist) * spring;
-        const fy = (dy / dist) * spring;
-        a.vx += fx;
-        a.vy += fy;
-        b.vx -= fx;
-        b.vy -= fy;
-      });
-
-      nodes.forEach((node) => {
-        const position = positions.get(node.id);
-        const degreeWeight = weightByNode.get(node.id) || 0;
-        const anchorPull = 0.012 + 0.004 * Math.min(1, degreeWeight / 200);
-        position.vx += (position.ax - position.x) * anchorPull;
-        position.vy += (position.ay - position.y) * anchorPull;
-        position.x = clamp(position.x + position.vx, 64, bounds.width - 64);
-        position.y = clamp(position.y + position.vy, 64, bounds.height - 64);
-      });
-    }
-
-    return normalizePositions(positions);
+    return positions;
   }
 
   async function loadBaseData() {
@@ -325,8 +216,8 @@
     });
 
     const positionsByPrompt = {
-      default: relaxLayout(nodes, groundTruthEdges, buildInitialAnchors(metadata.default), weightByNode),
-      reverse: relaxLayout(nodes, groundTruthEdges, buildInitialAnchors(metadata.reverse), weightByNode),
+      default: buildCircularPositions(metadata.default),
+      reverse: buildCircularPositions(metadata.reverse),
     };
 
     return {
@@ -682,7 +573,7 @@
       `<li>${counts.correct} correct emitted edges currently recover ${coverage.toFixed(1)}% of the ground-truth graph.</li>`,
       `<li>${counts.hallucinated} emitted edges are hallucinated, giving ${precision.toFixed(1)}% precision among valid emitted edges so far.</li>`,
       `<li>${skippedTotal} raw outputs were skipped during sanitization (${skipped.invalidIds} invalid IDs, ${skipped.duplicates} duplicates, ${skipped.malformed} malformed, ${skipped.selfLoops} self-loops).</li>`,
-      `<li>The node layout is anchored to the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order and relaxed against the ground-truth graph.</li>`,
+      `<li>The node layout follows the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order on a fixed circular ring.</li>`,
     ].join("");
   }
 
