@@ -451,6 +451,35 @@
     canvas.appendChild(line);
   }
 
+  function drawNodeLabel(position, text, isSelected = false) {
+    const dx = position.x - bounds.width / 2;
+    const dy = position.y - bounds.height / 2;
+    const length = Math.hypot(dx, dy) || 1;
+    const offset = 18;
+    const label = document.createElementNS(svgNs, "text");
+    const x = position.x + (dx / length) * offset;
+    const y = position.y + (dy / length) * offset;
+    const classes = ["graph-label"];
+
+    if (isSelected) {
+      classes.push("selected");
+    }
+
+    label.setAttribute("class", classes.join(" "));
+    label.setAttribute("x", x.toFixed(2));
+    label.setAttribute("y", y.toFixed(2));
+    label.setAttribute("dominant-baseline", "middle");
+
+    if (Math.abs(dx) < 24) {
+      label.setAttribute("text-anchor", "middle");
+    } else {
+      label.setAttribute("text-anchor", dx > 0 ? "start" : "end");
+    }
+
+    label.textContent = text;
+    canvas.appendChild(label);
+  }
+
   function renderGraph() {
     canvas.innerHTML = "";
     if (!state.data) {
@@ -515,17 +544,11 @@
       canvas.appendChild(graphNode);
     });
 
-    if (current) {
-      [current.source, current.target].forEach((id) => {
-        const position = positions.get(id);
-        const label = document.createElementNS(svgNs, "text");
-        label.setAttribute("class", "graph-label selected");
-        label.setAttribute("x", (position.x + 14).toFixed(2));
-        label.setAttribute("y", (position.y - 14).toFixed(2));
-        label.textContent = labelForNode(id);
-        canvas.appendChild(label);
-      });
-    }
+    state.data.nodes.forEach((node) => {
+      const position = positions.get(node.id);
+      const isSelected = current && (current.source === node.id || current.target === node.id);
+      drawNodeLabel(position, labelForNode(node.id), isSelected);
+    });
   }
 
   function renderLog() {

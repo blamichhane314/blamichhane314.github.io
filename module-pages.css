@@ -551,40 +551,40 @@ a {
 
 .graph-edge {
   stroke: rgba(42, 44, 56, 0.18);
-  stroke-width: 1.8;
+  stroke-width: 1.2;
 }
 
 .graph-edge.path-edge,
 .graph-edge.current-edge {
   stroke: rgba(42, 44, 56, 0.92);
-  stroke-width: 3.5;
+  stroke-width: 2.4;
 }
 
 .graph-edge.ground-edge {
   stroke: rgba(42, 44, 56, 0.13);
-  stroke-width: 1.2;
+  stroke-width: 0.9;
 }
 
 .graph-edge.correct-edge {
   stroke: #2f8f4e;
-  stroke-width: 3.2;
+  stroke-width: 2.2;
 }
 
 .graph-edge.hallucinated-edge {
   stroke: #c44747;
-  stroke-width: 3.2;
+  stroke-width: 2.2;
 }
 
 .graph-edge.current-correct-edge {
   stroke: #2f8f4e;
-  stroke-width: 4;
+  stroke-width: 2.8;
   stroke-dasharray: 10 8;
   animation: dash-shift 1.2s linear infinite;
 }
 
 .graph-edge.current-hallucinated-edge {
   stroke: #c44747;
-  stroke-width: 4;
+  stroke-width: 2.8;
   stroke-dasharray: 10 8;
   animation: dash-shift 1.2s linear infinite;
 }
@@ -595,9 +595,9 @@ a {
 }
 
 .graph-label {
-  fill: rgba(42, 44, 56, 0.74);
+  fill: rgba(42, 44, 56, 0.66);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.06em;
 }
 
