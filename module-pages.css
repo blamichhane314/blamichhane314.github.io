@@ -220,7 +220,7 @@ a {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 18px;
 }
 
@@ -234,6 +234,8 @@ a {
   font-size: clamp(1.05rem, 2.5vw, 1.45rem);
   font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .metric-note {
@@ -278,6 +280,10 @@ a {
   padding: 0;
 }
 
+.sequence-side-panel {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.2fr) minmax(0, 0.95fr);
+}
+
 .control-card label {
   display: grid;
   gap: 8px;
@@ -295,6 +301,43 @@ a {
 .control-card select {
   width: 100%;
   margin: 0;
+}
+
+.prompt-details {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.prompt-details summary {
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.prompt-meta {
+  margin-top: 12px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.prompt-text {
+  margin: 10px 0 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--muted);
+  white-space: pre-wrap;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
 }
 
 .button-row {
@@ -369,6 +412,14 @@ a {
   font-size: 0.92rem;
 }
 
+.sequence-log li.is-correct strong {
+  color: #286f3a;
+}
+
+.sequence-log li.is-hallucinated strong {
+  color: #ad3d3d;
+}
+
 .sequence-log li:first-child {
   border-top: 0;
   padding-top: 0;
@@ -413,6 +464,38 @@ a {
   color: var(--ink);
 }
 
+.legend-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.legend-swatch {
+  width: 28px;
+  height: 0;
+  border-top: 3px solid rgba(42, 44, 56, 0.18);
+}
+
+.legend-swatch.ground {
+  border-top-color: rgba(42, 44, 56, 0.18);
+}
+
+.legend-swatch.correct {
+  border-top-color: #2f8f4e;
+}
+
+.legend-swatch.hallucinated {
+  border-top-color: #c44747;
+}
+
 .graph-node {
   fill: rgba(42, 44, 56, 0.88);
   stroke: rgba(255, 255, 255, 0.95);
@@ -444,6 +527,35 @@ a {
 .graph-edge.current-edge {
   stroke: rgba(42, 44, 56, 0.92);
   stroke-width: 3.5;
+}
+
+.graph-edge.ground-edge {
+  stroke: rgba(42, 44, 56, 0.13);
+  stroke-width: 1.2;
+}
+
+.graph-edge.correct-edge {
+  stroke: #2f8f4e;
+  stroke-width: 3.2;
+}
+
+.graph-edge.hallucinated-edge {
+  stroke: #c44747;
+  stroke-width: 3.2;
+}
+
+.graph-edge.current-correct-edge {
+  stroke: #2f8f4e;
+  stroke-width: 4;
+  stroke-dasharray: 10 8;
+  animation: dash-shift 1.2s linear infinite;
+}
+
+.graph-edge.current-hallucinated-edge {
+  stroke: #c44747;
+  stroke-width: 4;
+  stroke-dasharray: 10 8;
+  animation: dash-shift 1.2s linear infinite;
 }
 
 .graph-edge.current-edge {

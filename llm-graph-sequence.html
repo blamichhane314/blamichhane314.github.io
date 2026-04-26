@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sequence Viewer</title>
+  <title>LLM Sequence Viewer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
     <header class="module-toolbar">
       <a class="toolbar-link" href="./index.html">Back to Home</a>
       <div class="toolbar-center">
-        <span class="toolbar-title">Sequence Viewer</span>
-        <span class="toolbar-subtitle">LLM Graph Generation / Sequential Edge Emission</span>
+        <span class="toolbar-title">LLM Sequence Viewer</span>
+        <span class="toolbar-subtitle">Game of Thrones / Ground Truth Comparison / Sequential Edges</span>
       </div>
       <a class="toolbar-chip" href="./research.html">Research Page</a>
     </header>
@@ -30,10 +30,10 @@
         <div class="hero-grid">
           <div class="hero-copy">
             <p class="eyebrow">Sequential graph generation</p>
-            <h1>Watch a graph form one edge at a time.</h1>
+            <h1>Watch a model emit edges against a fixed ground-truth graph.</h1>
             <p>
-              A prototype viewer for sequential graph generation. The emphasis is on order effects:
-              the partial graph, the currently emitted edge, and the way local motifs accumulate as
+              This viewer uses actual Game of Thrones Season 1 LLM outputs. Ground-truth edges sit
+              underneath in soft grey; emitted edges are highlighted as correct or hallucinated as
               the sequence unfolds.
             </p>
           </div>
@@ -41,14 +41,14 @@
           <aside class="hero-meta">
             <article class="meta-card">
               <p class="panel-label">Current Scope</p>
-              <h2>Edge-by-edge playback</h2>
-              <p>Compare different generation regimes and watch how the structure accumulates over time.</p>
+              <h2>Run-by-run playback</h2>
+              <p>Switch prompt order and model run, then compare the emitted sequence to the fixed reference graph.</p>
             </article>
 
             <article class="meta-card">
-              <p class="panel-label">Use</p>
-              <h2>Read the graph first</h2>
-              <p>The log and notes are support layers; the animation field carries the main idea.</p>
+              <p class="panel-label">Color Logic</p>
+              <h2>Grey, green, red</h2>
+              <p>Grey shows the base graph, green marks emitted edges that exist in ground truth, and red marks hallucinated edges.</p>
             </article>
           </aside>
         </div>
@@ -56,9 +56,15 @@
 
       <section class="stat-grid">
         <article class="stat-card">
-          <div class="metric-label">Preset</div>
-          <div class="metric-value" id="seq-preset-stat">--</div>
-          <div class="metric-note">generation regime</div>
+          <div class="metric-label">Run</div>
+          <div class="metric-value" id="seq-run-stat">--</div>
+          <div class="metric-note">selected LLM output</div>
+        </article>
+
+        <article class="stat-card">
+          <div class="metric-label">Prompt</div>
+          <div class="metric-value" id="seq-prompt-stat">--</div>
+          <div class="metric-note">node-order condition</div>
         </article>
 
         <article class="stat-card">
@@ -68,15 +74,15 @@
         </article>
 
         <article class="stat-card">
-          <div class="metric-label">Edges</div>
-          <div class="metric-value" id="seq-edge-stat">--</div>
-          <div class="metric-note">emitted so far</div>
+          <div class="metric-label">Correct</div>
+          <div class="metric-value" id="seq-correct-stat">--</div>
+          <div class="metric-note">matches in ground truth</div>
         </article>
 
         <article class="stat-card">
-          <div class="metric-label">Density</div>
-          <div class="metric-value" id="seq-density-stat">--</div>
-          <div class="metric-note">partial graph density</div>
+          <div class="metric-label">Hallucinated</div>
+          <div class="metric-value" id="seq-hallucinated-stat">--</div>
+          <div class="metric-note">emitted outside ground truth</div>
         </article>
       </section>
 
@@ -84,38 +90,42 @@
         <article class="surface-panel">
           <div class="panel-head">
             <span>Playback Surface</span>
-            <span id="sequence-caption">running partial graph</span>
+            <span id="sequence-caption">loading run data</span>
           </div>
           <div class="graph-stage">
             <svg id="sequence-canvas" viewBox="0 0 960 620" aria-label="Sequential graph generation canvas"></svg>
           </div>
         </article>
 
-        <aside class="side-panel">
+        <aside class="side-panel sequence-side-panel">
           <article class="control-card">
-            <p class="panel-label">Playback</p>
-            <h2>Sequence controls</h2>
-            <p>Switch generation presets, change speed, and step through the edge sequence.</p>
+            <p class="panel-label">Run Controls</p>
+            <h2>Select prompt, run, and playback speed</h2>
+            <p>Prompt text can stay collapsed until needed.</p>
 
             <label>
-              <span class="select-line"><span>Preset</span><span class="range-value" id="preset-label">Hub First</span></span>
-              <select id="sequence-preset">
-                <option value="hub">Hub First</option>
-                <option value="triangles">Triangle Bias</option>
-                <option value="blocks">Block Structure</option>
-                <option value="chain">Progressive Chain</option>
+              <span class="select-line"><span>Prompt order</span><span class="range-value" id="prompt-order-label">Default</span></span>
+              <select id="prompt-order">
+                <option value="default">Default</option>
+                <option value="reverse">Reverse</option>
               </select>
             </label>
 
             <label>
-              <span class="range-line"><span>Nodes</span><span class="range-value" id="sequence-node-count-value">12</span></span>
-              <input id="sequence-node-count" type="range" min="8" max="16" step="1" value="12" />
+              <span class="select-line"><span>Run</span><span class="range-value" id="run-label">--</span></span>
+              <select id="sequence-run"></select>
             </label>
 
             <label>
               <span class="range-line"><span>Speed</span><span class="range-value" id="sequence-speed-value">0.75 s</span></span>
               <input id="sequence-speed" type="range" min="250" max="1400" step="50" value="750" />
             </label>
+
+            <details class="prompt-details">
+              <summary>Show prompt</summary>
+              <div class="prompt-meta" id="prompt-meta">Prompt file: --</div>
+              <pre class="prompt-text" id="prompt-text"></pre>
+            </details>
 
             <div class="button-row">
               <button class="module-button primary" id="sequence-play-toggle" type="button">Pause</button>
@@ -130,20 +140,26 @@
             <div class="status-line">
               <span class="status-chip" id="sequence-status-chip">Running</span>
               <span class="status-chip" id="sequence-length-chip">0 of 0</span>
+              <span class="status-chip" id="sequence-quality-chip">--</span>
             </div>
             <ol class="sequence-log" id="sequence-log"></ol>
           </article>
 
           <article class="log-card">
-            <p class="panel-label">Interpretation</p>
-            <h2>What the presets suggest</h2>
-            <ul class="summary-list" id="preset-notes"></ul>
+            <p class="panel-label">Comparison</p>
+            <h2>Ground truth overlay</h2>
+            <div class="legend-list">
+              <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth base graph</span></div>
+              <div class="legend-item"><span class="legend-swatch correct"></span><span>correct emitted edge</span></div>
+              <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated emitted edge</span></div>
+            </div>
+            <ul class="summary-list dynamic-list" id="run-summary"></ul>
           </article>
         </aside>
       </section>
 
       <p class="footer-note">
-        Next layer: connect the viewer to real LLM traces and compare emission order, prompt context, and final graph structure.
+        This module uses actual LLM outputs, prompt files, node-order metadata, and a fixed ground-truth graph for comparison.
       </p>
     </main>
   </div>

@@ -1,301 +1,558 @@
 (() => {
+  const DATA_ROOT = "./data/got";
   const svgNs = "http://www.w3.org/2000/svg";
   const bounds = { width: 960, height: 620 };
+
+  const PROMPTS = {
+    default: {
+      label: "Default",
+      promptFile: "got_s1_prompt_default.txt",
+      orderKey: "default",
+      runDir: "default_prompt",
+      runs: [
+        "gpt_5.2_thinking_rep1.json",
+        "gpt_5.2_thinking_rep2.json",
+        "gpt_5.2_thinking_with_internet_rep3.json",
+        "claude_sonnet_4.6_extendedthinking_rep1.json",
+        "claude_sonnet_4.6_extendedthinking_rep2.json",
+        "gemini_3_thinking_rep1.json",
+        "gemini_3_thinking_rep2.json",
+        "gptoss_120b_hight_rep1.json",
+        "gptoss_120b_low_rep1.json",
+        "gptoss_120b_low_rep2.json",
+      ],
+    },
+    reverse: {
+      label: "Reverse",
+      promptFile: "got_s1_prompt_reverse.txt",
+      orderKey: "reverse",
+      runDir: "reverse_prompt",
+      runs: [
+        "gpt_5.2_thinking_rev_rep1.json",
+        "gpt_5.2_thinking_rev_rep2int.json",
+        "claude_sonnet_4.6_extendedthinking_rep1.json",
+        "claude_sonnet_4.6_extendedthinking_rep2.json",
+        "claude_sonnet_4.6_extendedthinking_rep3.json",
+        "gemini_3_thinking_rep1.json",
+        "gemini_3_thinking_rep2.json",
+      ],
+    },
+  };
+
   const state = {
-    preset: "hub",
-    nodeCount: 12,
+    promptKey: "default",
+    runFile: PROMPTS.default.runs[0],
     speed: 750,
     playing: true,
     step: 0,
-    sequence: [],
-    positions: [],
     timer: null,
+    data: null,
+    runCache: new Map(),
   };
 
   const canvas = document.getElementById("sequence-canvas");
-  const presetSelect = document.getElementById("sequence-preset");
-  const nodeCountInput = document.getElementById("sequence-node-count");
+  const promptOrderSelect = document.getElementById("prompt-order");
+  const runSelect = document.getElementById("sequence-run");
   const speedInput = document.getElementById("sequence-speed");
   const playToggleButton = document.getElementById("sequence-play-toggle");
   const stepButton = document.getElementById("sequence-step");
   const resetButton = document.getElementById("sequence-reset");
 
-  const presetLabel = document.getElementById("preset-label");
-  const nodeCountValue = document.getElementById("sequence-node-count-value");
+  const promptOrderLabel = document.getElementById("prompt-order-label");
+  const runLabel = document.getElementById("run-label");
   const speedValue = document.getElementById("sequence-speed-value");
   const sequenceCaption = document.getElementById("sequence-caption");
   const sequenceStatusTitle = document.getElementById("sequence-status-title");
   const sequenceStatusChip = document.getElementById("sequence-status-chip");
   const sequenceLengthChip = document.getElementById("sequence-length-chip");
+  const sequenceQualityChip = document.getElementById("sequence-quality-chip");
   const sequenceLog = document.getElementById("sequence-log");
-  const presetNotes = document.getElementById("preset-notes");
+  const runSummary = document.getElementById("run-summary");
+  const promptMeta = document.getElementById("prompt-meta");
+  const promptText = document.getElementById("prompt-text");
 
-  const seqPresetStat = document.getElementById("seq-preset-stat");
+  const seqRunStat = document.getElementById("seq-run-stat");
+  const seqPromptStat = document.getElementById("seq-prompt-stat");
   const seqStepStat = document.getElementById("seq-step-stat");
-  const seqEdgeStat = document.getElementById("seq-edge-stat");
-  const seqDensityStat = document.getElementById("seq-density-stat");
-
-  const presetNames = {
-    hub: "Hub First",
-    triangles: "Triangle Bias",
-    blocks: "Block Structure",
-    chain: "Progressive Chain",
-  };
-
-  const presetSummaries = {
-    hub: [
-      "A central node accumulates degree early, then secondary ties build around that anchor.",
-      "This makes degree concentration legible before the rest of the structure fills in.",
-      "A small early preference can lock the whole sequence into a hub-dominated regime.",
-    ],
-    triangles: [
-      "Edges arrive in clustered motifs, so local closure appears almost immediately.",
-      "Useful for watching how triangle bias changes the feel of the partial graph.",
-      "The same edge budget can produce much denser local structure when closure is favored.",
-    ],
-    blocks: [
-      "Within-group ties appear first, while cross-group edges are delayed.",
-      "This makes community formation visible before the global graph connects.",
-      "The timing of the first bridge matters as much as the final edge count.",
-    ],
-    chain: [
-      "Connectivity grows incrementally and remains fragile until shortcuts appear later.",
-      "This makes order effects especially easy to read in the partial graph.",
-      "Late long-range edges collapse path lengths much more than their count suggests.",
-    ],
-  };
-
-  function labelFor(index) {
-    return `N${String(index + 1).padStart(2, "0")}`;
-  }
+  const seqCorrectStat = document.getElementById("seq-correct-stat");
+  const seqHallucinatedStat = document.getElementById("seq-hallucinated-stat");
 
   function edgeKey(a, b) {
-    return a < b ? `${a}-${b}` : `${b}-${a}`;
+    return a < b ? `${a}::${b}` : `${b}::${a}`;
   }
 
-  function buildLayout() {
-    const n = state.nodeCount;
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function titleCase(value) {
+    return value.replace(/\b[a-z]/g, (match) => match.toUpperCase());
+  }
+
+  function formatRunLabel(fileName) {
+    const bare = fileName.replace(/\.json$/i, "");
+    const parts = bare.split("_");
+    const repIndex = parts.findIndex((part) => /^rep\d+/i.test(part) || /^rep\d+\w*/i.test(part));
+    let modelPart = repIndex >= 0 ? parts.slice(0, repIndex).join("_") : bare;
+    const repPart = repIndex >= 0 ? parts.slice(repIndex).join(" ") : "";
+
+    const replacements = [
+      ["gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
+      ["gpt_5.2_thinking_rev", "GPT-5.2 thinking rev"],
+      ["gpt_5.2_thinking", "GPT-5.2 thinking"],
+      ["claude_sonnet_4.6_extendedthinking", "Claude Sonnet 4.6 extended thinking"],
+      ["gemini_3_thinking", "Gemini 3 thinking"],
+      ["gptoss_120b_hight", "gpt-oss 120b high-t"],
+      ["gptoss_120b_low", "gpt-oss 120b low"],
+    ];
+
+    replacements.forEach(([source, target]) => {
+      if (modelPart === source) {
+        modelPart = target;
+      }
+    });
+
+    if (modelPart.includes("_")) {
+      modelPart = titleCase(modelPart.replace(/_/g, " "));
+    }
+
+    return repPart ? `${modelPart} / ${repPart}` : modelPart;
+  }
+
+  function parseCsv(text) {
+    const lines = text.trim().split(/\r?\n/);
+    const headers = lines.shift().split(",");
+    return lines
+      .filter((line) => line.trim())
+      .map((line) => {
+        const values = line.split(",");
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index];
+        });
+        return row;
+      });
+  }
+
+  async function fetchJson(path) {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${path}`);
+    }
+    return response.json();
+  }
+
+  async function fetchText(path) {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${path}`);
+    }
+    return response.text();
+  }
+
+  function buildInitialAnchors(order) {
     const cx = bounds.width / 2;
     const cy = bounds.height / 2;
+    const rx = 330;
+    const ry = 228;
+    const anchors = new Map();
 
-    if (state.preset === "hub") {
-      const outerRadius = 240;
-      const positions = [{ x: cx, y: cy }];
-      for (let i = 1; i < n; i += 1) {
-        const angle = -Math.PI / 2 + (Math.PI * 2 * (i - 1)) / Math.max(1, n - 1);
-        positions.push({
-          x: cx + Math.cos(angle) * outerRadius,
-          y: cy + Math.sin(angle) * 210,
-        });
-      }
-      return positions;
-    }
-
-    if (state.preset === "triangles") {
-      const clusterCenters = [
-        { x: 250, y: 220 },
-        { x: 500, y: 190 },
-        { x: 710, y: 320 },
-        { x: 390, y: 420 },
-        { x: 660, y: 470 },
-      ];
-      return Array.from({ length: n }, (_, index) => {
-        const cluster = clusterCenters[Math.floor(index / 3) % clusterCenters.length];
-        const localIndex = index % 3;
-        const angle = -Math.PI / 2 + (Math.PI * 2 * localIndex) / 3;
-        return {
-          x: cluster.x + Math.cos(angle) * 34,
-          y: cluster.y + Math.sin(angle) * 34,
-        };
+    order.forEach((id, index) => {
+      const angle = -Math.PI / 2 + (Math.PI * 2 * index) / order.length;
+      const radialShift = 0.92 + 0.08 * Math.sin(index * 0.67);
+      anchors.set(id, {
+        x: cx + Math.cos(angle) * rx * radialShift,
+        y: cy + Math.sin(angle) * ry * radialShift,
       });
-    }
-
-    if (state.preset === "blocks") {
-      return Array.from({ length: n }, (_, index) => {
-        const leftBlock = index < Math.ceil(n / 2);
-        const localIndex = leftBlock ? index : index - Math.ceil(n / 2);
-        const columns = 3;
-        const col = localIndex % columns;
-        const row = Math.floor(localIndex / columns);
-        return {
-          x: (leftBlock ? 280 : 670) + col * 72,
-          y: 210 + row * 92,
-        };
-      });
-    }
-
-    return Array.from({ length: n }, (_, index) => {
-      const x = 120 + index * ((bounds.width - 240) / Math.max(1, n - 1));
-      const y = 310 + Math.sin(index * 0.8) * 120;
-      return { x, y };
     });
+
+    return anchors;
   }
 
-  function buildSequence() {
-    const sequence = [];
-    const seen = new Set();
-    const n = state.nodeCount;
-    const half = Math.ceil(n / 2);
+  function relaxLayout(nodes, edges, anchors, weightByNode) {
+    const positions = new Map();
+    nodes.forEach((node) => {
+      const anchor = anchors.get(node.id);
+      positions.set(node.id, {
+        x: anchor.x,
+        y: anchor.y,
+        ax: anchor.x,
+        ay: anchor.y,
+        vx: 0,
+        vy: 0,
+      });
+    });
 
-    function pushEdge(a, b, note) {
-      if (a === b) {
+    const maxWeight = Math.max(...edges.map((edge) => edge.weight), 1);
+
+    for (let iteration = 0; iteration < 220; iteration += 1) {
+      nodes.forEach((node) => {
+        const position = positions.get(node.id);
+        position.vx = 0;
+        position.vy = 0;
+      });
+
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const a = positions.get(nodes[i].id);
+          const b = positions.get(nodes[j].id);
+          let dx = b.x - a.x;
+          let dy = b.y - a.y;
+          let distSq = dx * dx + dy * dy;
+          if (distSq < 1) {
+            dx = 0.5;
+            dy = 0.5;
+            distSq = dx * dx + dy * dy;
+          }
+          const dist = Math.sqrt(distSq);
+          const repulsion = 2800 / distSq;
+          const fx = (dx / dist) * repulsion;
+          const fy = (dy / dist) * repulsion;
+          a.vx -= fx;
+          a.vy -= fy;
+          b.vx += fx;
+          b.vy += fy;
+        }
+      }
+
+      edges.forEach((edge) => {
+        const a = positions.get(edge.source);
+        const b = positions.get(edge.target);
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        const weightRatio = edge.weight / maxWeight;
+        const idealLength = 118 - 52 * Math.sqrt(weightRatio);
+        const spring = (dist - idealLength) * (0.01 + 0.01 * weightRatio);
+        const fx = (dx / dist) * spring;
+        const fy = (dy / dist) * spring;
+        a.vx += fx;
+        a.vy += fy;
+        b.vx -= fx;
+        b.vy -= fy;
+      });
+
+      nodes.forEach((node) => {
+        const position = positions.get(node.id);
+        const degreeWeight = weightByNode.get(node.id) || 0;
+        const anchorPull = 0.012 + 0.004 * Math.min(1, degreeWeight / 200);
+        position.vx += (position.ax - position.x) * anchorPull;
+        position.vy += (position.ay - position.y) * anchorPull;
+        position.x = clamp(position.x + position.vx, 64, bounds.width - 64);
+        position.y = clamp(position.y + position.vy, 64, bounds.height - 64);
+      });
+    }
+
+    return positions;
+  }
+
+  async function loadBaseData() {
+    const [
+      nodesCsv,
+      edgesCsv,
+      metadata,
+      defaultPrompt,
+      reversePrompt,
+    ] = await Promise.all([
+      fetchText(`${DATA_ROOT}/ground_truth/nodes_selected.csv`),
+      fetchText(`${DATA_ROOT}/ground_truth/edges_selected.csv`),
+      fetchJson(`${DATA_ROOT}/prompts/node_order_metadata.json`),
+      fetchText(`${DATA_ROOT}/prompts/${PROMPTS.default.promptFile}`),
+      fetchText(`${DATA_ROOT}/prompts/${PROMPTS.reverse.promptFile}`),
+    ]);
+
+    const nodes = parseCsv(nodesCsv).map((row) => ({
+      id: row.Id,
+      label: row.Label,
+    }));
+
+    const groundTruthEdges = parseCsv(edgesCsv).map((row) => ({
+      source: row.Source,
+      target: row.Target,
+      weight: Number(row.Weight || 0),
+      season: Number(row.Season || 0),
+      key: edgeKey(row.Source, row.Target),
+    }));
+
+    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    const allowedSet = new Set(nodes.map((node) => node.id));
+    const groundTruthSet = new Set(groundTruthEdges.map((edge) => edge.key));
+    const weightByNode = new Map(nodes.map((node) => [node.id, 0]));
+
+    groundTruthEdges.forEach((edge) => {
+      weightByNode.set(edge.source, (weightByNode.get(edge.source) || 0) + edge.weight);
+      weightByNode.set(edge.target, (weightByNode.get(edge.target) || 0) + edge.weight);
+    });
+
+    const positionsByPrompt = {
+      default: relaxLayout(nodes, groundTruthEdges, buildInitialAnchors(metadata.default), weightByNode),
+      reverse: relaxLayout(nodes, groundTruthEdges, buildInitialAnchors(metadata.reverse), weightByNode),
+    };
+
+    return {
+      nodes,
+      nodeMap,
+      allowedSet,
+      groundTruthEdges,
+      groundTruthSet,
+      weightByNode,
+      prompts: {
+        default: {
+          label: PROMPTS.default.label,
+          order: metadata.default,
+          text: defaultPrompt,
+          fileName: PROMPTS.default.promptFile,
+        },
+        reverse: {
+          label: PROMPTS.reverse.label,
+          order: metadata.reverse,
+          text: reversePrompt,
+          fileName: PROMPTS.reverse.promptFile,
+        },
+      },
+      positionsByPrompt,
+    };
+  }
+
+  function sanitizeRun(rawEdges, data) {
+    const validEdges = [];
+    const seen = new Set();
+    const skipped = {
+      malformed: 0,
+      selfLoops: 0,
+      invalidIds: 0,
+      duplicates: 0,
+    };
+
+    const edges = Array.isArray(rawEdges) ? rawEdges : [];
+    edges.forEach((item) => {
+      if (!Array.isArray(item) || item.length !== 2) {
+        skipped.malformed += 1;
         return;
       }
-      const key = edgeKey(a, b);
+      const source = typeof item[0] === "string" ? item[0].trim() : "";
+      const target = typeof item[1] === "string" ? item[1].trim() : "";
+      if (!source || !target) {
+        skipped.malformed += 1;
+        return;
+      }
+      if (source === target) {
+        skipped.selfLoops += 1;
+        return;
+      }
+      if (!data.allowedSet.has(source) || !data.allowedSet.has(target)) {
+        skipped.invalidIds += 1;
+        return;
+      }
+      const key = edgeKey(source, target);
       if (seen.has(key)) {
+        skipped.duplicates += 1;
         return;
       }
       seen.add(key);
-      sequence.push({ a, b, note });
+      validEdges.push({
+        source,
+        target,
+        key,
+        isGroundTruth: data.groundTruthSet.has(key),
+      });
+    });
+
+    return {
+      edges: validEdges,
+      rawCount: edges.length,
+      skipped,
+    };
+  }
+
+  async function loadRun(promptKey, runFile) {
+    const cacheKey = `${promptKey}/${runFile}`;
+    if (state.runCache.has(cacheKey)) {
+      return state.runCache.get(cacheKey);
     }
 
-    if (state.preset === "hub") {
-      for (let i = 1; i < n; i += 1) {
-        pushEdge(0, i, `${labelFor(0)} connects to ${labelFor(i)}`);
-      }
-      for (let i = 1; i < n - 1; i += 1) {
-        pushEdge(i, i + 1, `secondary tie ${labelFor(i)}-${labelFor(i + 1)}`);
-      }
-      for (let i = 2; i < n; i += 3) {
-        pushEdge(i, ((i + 3) % (n - 1)) + 1, `outer-ring bridge from ${labelFor(i)}`);
-      }
-    }
+    const raw = await fetchJson(`${DATA_ROOT}/llm_calls/${PROMPTS[promptKey].runDir}/${runFile}`);
+    const run = sanitizeRun(raw.edges, state.data);
+    run.fileName = runFile;
+    run.label = formatRunLabel(runFile);
+    run.promptKey = promptKey;
+    state.runCache.set(cacheKey, run);
+    return run;
+  }
 
-    if (state.preset === "triangles") {
-      for (let start = 0; start < n; start += 3) {
-        const a = start;
-        const b = Math.min(n - 1, start + 1);
-        const c = Math.min(n - 1, start + 2);
-        if (b < n) {
-          pushEdge(a, b, `motif edge ${labelFor(a)}-${labelFor(b)}`);
-        }
-        if (c < n) {
-          pushEdge(b, c, `motif edge ${labelFor(b)}-${labelFor(c)}`);
-          pushEdge(a, c, `triangle closes at ${labelFor(c)}`);
-        }
-      }
-      for (let start = 0; start + 3 < n; start += 3) {
-        pushEdge(start, start + 3, `bridge between motifs ${labelFor(start)}-${labelFor(start + 3)}`);
-      }
-      for (let i = 0; i + 4 < n; i += 4) {
-        pushEdge(i + 1, i + 4, `longer closure cue ${labelFor(i + 1)}-${labelFor(i + 4)}`);
-      }
-    }
-
-    if (state.preset === "blocks") {
-      for (let i = 0; i < half - 1; i += 1) {
-        pushEdge(i, i + 1, `within-group edge ${labelFor(i)}-${labelFor(i + 1)}`);
-      }
-      for (let i = half; i < n - 1; i += 1) {
-        pushEdge(i, i + 1, `within-group edge ${labelFor(i)}-${labelFor(i + 1)}`);
-      }
-      for (let i = 0; i + 2 < half; i += 1) {
-        pushEdge(i, i + 2, `dense first block tie ${labelFor(i)}-${labelFor(i + 2)}`);
-      }
-      for (let i = half; i + 2 < n; i += 1) {
-        pushEdge(i, i + 2, `dense second block tie ${labelFor(i)}-${labelFor(i + 2)}`);
-      }
-      for (let i = 0; i < half; i += 1) {
-        pushEdge(i, half + (i % Math.max(1, n - half)), `cross-block bridge ${labelFor(i)}`);
-      }
-    }
-
-    if (state.preset === "chain") {
-      for (let i = 0; i < n - 1; i += 1) {
-        pushEdge(i, i + 1, `path extension ${labelFor(i)}-${labelFor(i + 1)}`);
-      }
-      for (let i = 0; i < n - 2; i += 1) {
-        pushEdge(i, i + 2, `shortcut ${labelFor(i)}-${labelFor(i + 2)}`);
-      }
-      for (let i = 0; i < n; i += 3) {
-        pushEdge(i, Math.min(n - 1, i + Math.floor(n / 2)), `late long-range jump from ${labelFor(i)}`);
-      }
-    }
-
-    return sequence;
+  function currentRun() {
+    return state.runCache.get(`${state.promptKey}/${state.runFile}`) || null;
   }
 
   function emittedEdges() {
-    return state.sequence.slice(0, state.step);
+    const run = currentRun();
+    return run ? run.edges.slice(0, state.step) : [];
   }
 
-  function density(edgeCount) {
-    const possible = (state.nodeCount * (state.nodeCount - 1)) / 2;
-    return possible ? edgeCount / possible : 0;
+  function currentEdge() {
+    const run = currentRun();
+    if (!run || state.step === 0) {
+      return null;
+    }
+    return run.edges[state.step - 1] || null;
+  }
+
+  function computeCounts(edges) {
+    let correct = 0;
+    let hallucinated = 0;
+    edges.forEach((edge) => {
+      if (edge.isGroundTruth) {
+        correct += 1;
+      } else {
+        hallucinated += 1;
+      }
+    });
+    return { correct, hallucinated };
+  }
+
+  function labelForNode(id) {
+    return state.data.nodeMap.get(id)?.label || id;
+  }
+
+  function precisionFor(counts) {
+    const total = counts.correct + counts.hallucinated;
+    return total ? (counts.correct / total) * 100 : 0;
+  }
+
+  function coverageFor(correctCount) {
+    return state.data.groundTruthEdges.length
+      ? (correctCount / state.data.groundTruthEdges.length) * 100
+      : 0;
+  }
+
+  function populateRunSelect() {
+    const options = PROMPTS[state.promptKey].runs
+      .map((file) => {
+        const selected = file === state.runFile ? " selected" : "";
+        return `<option value="${file}"${selected}>${formatRunLabel(file)}</option>`;
+      })
+      .join("");
+    runSelect.innerHTML = options;
+    runLabel.textContent = formatRunLabel(state.runFile);
+    promptOrderLabel.textContent = PROMPTS[state.promptKey].label;
+  }
+
+  function updatePromptPanel() {
+    const prompt = state.data.prompts[state.promptKey];
+    promptMeta.textContent = `Prompt file: ${prompt.fileName} · order: ${prompt.label.toLowerCase()}`;
+    promptText.textContent = prompt.text;
+  }
+
+  function drawLine(x1, y1, x2, y2, className, opacity = null) {
+    const line = document.createElementNS(svgNs, "line");
+    line.setAttribute("x1", x1.toFixed(2));
+    line.setAttribute("y1", y1.toFixed(2));
+    line.setAttribute("x2", x2.toFixed(2));
+    line.setAttribute("y2", y2.toFixed(2));
+    line.setAttribute("class", className);
+    if (opacity !== null) {
+      line.setAttribute("stroke-opacity", opacity.toFixed(3));
+    }
+    canvas.appendChild(line);
   }
 
   function renderGraph() {
-    const edges = emittedEdges();
-    const currentEdge = state.step > 0 ? state.sequence[state.step - 1] : null;
     canvas.innerHTML = "";
+    if (!state.data) {
+      return;
+    }
 
-    edges.forEach((edge) => {
-      const line = document.createElementNS(svgNs, "line");
-      line.setAttribute("x1", state.positions[edge.a].x.toFixed(2));
-      line.setAttribute("y1", state.positions[edge.a].y.toFixed(2));
-      line.setAttribute("x2", state.positions[edge.b].x.toFixed(2));
-      line.setAttribute("y2", state.positions[edge.b].y.toFixed(2));
-      line.setAttribute(
-        "class",
-        currentEdge && edgeKey(edge.a, edge.b) === edgeKey(currentEdge.a, currentEdge.b)
-          ? "graph-edge current-edge"
-          : "graph-edge"
-      );
-      canvas.appendChild(line);
+    const positions = state.data.positionsByPrompt[state.promptKey];
+    const emitted = emittedEdges();
+    const current = currentEdge();
+    const maxWeight = Math.max(...state.data.groundTruthEdges.map((edge) => edge.weight), 1);
+
+    state.data.groundTruthEdges.forEach((edge) => {
+      const source = positions.get(edge.source);
+      const target = positions.get(edge.target);
+      const opacity = 0.08 + 0.18 * Math.sqrt(edge.weight / maxWeight);
+      drawLine(source.x, source.y, target.x, target.y, "graph-edge ground-edge", opacity);
     });
 
-    if (currentEdge) {
-      [currentEdge.a, currentEdge.b].forEach((index) => {
+    emitted.forEach((edge) => {
+      const source = positions.get(edge.source);
+      const target = positions.get(edge.target);
+      const isCurrent =
+        current && current.source === edge.source && current.target === edge.target;
+      const className = edge.isGroundTruth
+        ? isCurrent
+          ? "graph-edge current-correct-edge"
+          : "graph-edge correct-edge"
+        : isCurrent
+          ? "graph-edge current-hallucinated-edge"
+          : "graph-edge hallucinated-edge";
+      drawLine(source.x, source.y, target.x, target.y, className);
+    });
+
+    if (current) {
+      [current.source, current.target].forEach((id) => {
+        const position = positions.get(id);
         const halo = document.createElementNS(svgNs, "circle");
-        halo.setAttribute("cx", state.positions[index].x.toFixed(2));
-        halo.setAttribute("cy", state.positions[index].y.toFixed(2));
-        halo.setAttribute("r", "19");
+        halo.setAttribute("cx", position.x.toFixed(2));
+        halo.setAttribute("cy", position.y.toFixed(2));
+        halo.setAttribute("r", "18");
         halo.setAttribute("fill", "none");
-        halo.setAttribute("stroke", "rgba(42, 44, 56, 0.16)");
+        halo.setAttribute("stroke", current.isGroundTruth ? "rgba(47, 143, 78, 0.18)" : "rgba(196, 71, 71, 0.2)");
         halo.setAttribute("stroke-width", "2");
         canvas.appendChild(halo);
       });
     }
 
-    state.positions.forEach((position, index) => {
-      const node = document.createElementNS(svgNs, "circle");
+    const maxNodeWeight = Math.max(...state.data.weightByNode.values(), 1);
+    state.data.nodes.forEach((node) => {
+      const position = positions.get(node.id);
+      const weight = state.data.weightByNode.get(node.id) || 0;
+      const radius = 4.6 + 4 * Math.sqrt(weight / maxNodeWeight);
+      const graphNode = document.createElementNS(svgNs, "circle");
       const classes = ["graph-node"];
-      if (currentEdge && (currentEdge.a === index || currentEdge.b === index)) {
-        classes.push("selected");
-        classes.push("current");
+      if (current && (current.source === node.id || current.target === node.id)) {
+        classes.push("selected", "current");
       }
-      node.setAttribute("class", classes.join(" "));
-      node.setAttribute("cx", position.x.toFixed(2));
-      node.setAttribute("cy", position.y.toFixed(2));
-      node.setAttribute("r", currentEdge && (currentEdge.a === index || currentEdge.b === index) ? "9" : "6.5");
-      canvas.appendChild(node);
+      graphNode.setAttribute("class", classes.join(" "));
+      graphNode.setAttribute("cx", position.x.toFixed(2));
+      graphNode.setAttribute("cy", position.y.toFixed(2));
+      graphNode.setAttribute("r", radius.toFixed(2));
+      canvas.appendChild(graphNode);
     });
 
-    if (currentEdge) {
-      [currentEdge.a, currentEdge.b].forEach((index) => {
+    if (current) {
+      [current.source, current.target].forEach((id) => {
+        const position = positions.get(id);
         const label = document.createElementNS(svgNs, "text");
         label.setAttribute("class", "graph-label selected");
-        label.setAttribute("x", (state.positions[index].x + 14).toFixed(2));
-        label.setAttribute("y", (state.positions[index].y - 14).toFixed(2));
-        label.textContent = labelFor(index);
+        label.setAttribute("x", (position.x + 14).toFixed(2));
+        label.setAttribute("y", (position.y - 14).toFixed(2));
+        label.textContent = labelForNode(id);
         canvas.appendChild(label);
       });
     }
   }
 
   function renderLog() {
-    const start = Math.max(0, state.step - 4);
-    const end = Math.min(state.sequence.length, Math.max(state.step + 4, 8));
+    const run = currentRun();
+    if (!run) {
+      sequenceLog.innerHTML = "";
+      return;
+    }
+
+    const start = Math.max(0, state.step - 5);
+    const end = Math.min(run.edges.length, Math.max(state.step + 4, 8));
     const items = [];
 
-    for (let i = start; i < end; i += 1) {
-      const edge = state.sequence[i];
-      const status =
-        i < state.step - 1 ? "emitted" : i === state.step - 1 ? "current" : "queued";
+    for (let index = start; index < end; index += 1) {
+      const edge = run.edges[index];
+      const kindClass = edge.isGroundTruth ? "is-correct" : "is-hallucinated";
+      const kindLabel = edge.isGroundTruth ? "correct" : "hallucinated";
+      const status = index < state.step - 1 ? "emitted" : index === state.step - 1 ? "current" : "queued";
       items.push(`
-        <li>
-          <span class="step-id">step ${String(i + 1).padStart(2, "0")}</span>
-          <span><strong>${labelFor(edge.a)}-${labelFor(edge.b)}</strong> ${edge.note} <em>(${status})</em></span>
+        <li class="${kindClass}">
+          <span class="step-id">step ${String(index + 1).padStart(3, "0")}</span>
+          <span><strong>${edge.source}-${edge.target}</strong> ${kindLabel} <em>(${status})</em></span>
         </li>
       `);
     }
@@ -303,41 +560,68 @@
     sequenceLog.innerHTML = items.join("");
   }
 
-  function renderNotes() {
-    presetNotes.innerHTML = presetSummaries[state.preset]
-      .map((item) => `<li>${item}</li>`)
-      .join("");
+  function renderSummary() {
+    const run = currentRun();
+    if (!run) {
+      runSummary.innerHTML = "";
+      return;
+    }
+
+    const counts = computeCounts(emittedEdges());
+    const coverage = coverageFor(counts.correct);
+    const precision = precisionFor(counts);
+    const skipped = run.skipped;
+    const skippedTotal =
+      skipped.malformed + skipped.selfLoops + skipped.invalidIds + skipped.duplicates;
+
+    runSummary.innerHTML = [
+      `<li>${counts.correct} correct emitted edges currently recover ${coverage.toFixed(1)}% of the ground-truth graph.</li>`,
+      `<li>${counts.hallucinated} emitted edges are hallucinated, giving ${precision.toFixed(1)}% precision among valid emitted edges so far.</li>`,
+      `<li>${skippedTotal} raw outputs were skipped during sanitization (${skipped.invalidIds} invalid IDs, ${skipped.duplicates} duplicates, ${skipped.malformed} malformed, ${skipped.selfLoops} self-loops).</li>`,
+      `<li>The node layout is anchored to the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order and relaxed against the ground-truth graph.</li>`,
+    ].join("");
   }
 
   function updateStatus() {
-    const edges = emittedEdges().length;
-    const current = state.step > 0 ? state.sequence[state.step - 1] : null;
-
-    presetLabel.textContent = presetNames[state.preset];
-    nodeCountValue.textContent = String(state.nodeCount);
-    speedValue.textContent = `${(state.speed / 1000).toFixed(2)} s`;
-
-    seqPresetStat.textContent = presetNames[state.preset];
-    seqStepStat.textContent = `${state.step}/${state.sequence.length}`;
-    seqEdgeStat.textContent = String(edges);
-    seqDensityStat.textContent = `${(density(edges) * 100).toFixed(1)}%`;
-
-    sequenceLengthChip.textContent = `${state.step} of ${state.sequence.length}`;
-
-    if (state.step === 0) {
-      sequenceStatusTitle.textContent = "Current emission";
-      sequenceCaption.textContent = "running partial graph";
-    } else if (current) {
-      sequenceStatusTitle.textContent = `${labelFor(current.a)} to ${labelFor(current.b)}`;
-      sequenceCaption.textContent = current.note;
+    const run = currentRun();
+    if (!run) {
+      sequenceCaption.textContent = "loading run data";
+      return;
     }
 
-    if (state.playing && state.step < state.sequence.length) {
+    const emitted = emittedEdges();
+    const counts = computeCounts(emitted);
+    const current = currentEdge();
+    const precision = precisionFor(counts);
+
+    seqRunStat.textContent = run.label;
+    seqPromptStat.textContent = PROMPTS[state.promptKey].label;
+    seqStepStat.textContent = `${state.step}/${run.edges.length}`;
+    seqCorrectStat.textContent = String(counts.correct);
+    seqHallucinatedStat.textContent = String(counts.hallucinated);
+
+    runLabel.textContent = run.label;
+    promptOrderLabel.textContent = PROMPTS[state.promptKey].label;
+    speedValue.textContent = `${(state.speed / 1000).toFixed(2)} s`;
+
+    sequenceLengthChip.textContent = `${state.step} of ${run.edges.length}`;
+    sequenceQualityChip.textContent = `${precision.toFixed(1)}% precision`;
+
+    if (state.playing && state.step < run.edges.length) {
       sequenceStatusChip.textContent = "Running";
-    } else if (state.step >= state.sequence.length) {
+    } else if (state.step >= run.edges.length) {
       sequenceStatusChip.textContent = "Complete";
     } else {
       sequenceStatusChip.textContent = "Paused";
+    }
+
+    if (!current) {
+      sequenceStatusTitle.textContent = "Current emission";
+      sequenceCaption.textContent = "ground truth in grey, emitted edges on top";
+    } else {
+      const kind = current.isGroundTruth ? "correct" : "hallucinated";
+      sequenceStatusTitle.textContent = `${current.source} to ${current.target}`;
+      sequenceCaption.textContent = `${labelForNode(current.source)} ↔ ${labelForNode(current.target)} · ${kind}`;
     }
 
     playToggleButton.textContent = state.playing ? "Pause" : "Play";
@@ -347,7 +631,7 @@
     updateStatus();
     renderGraph();
     renderLog();
-    renderNotes();
+    renderSummary();
   }
 
   function stopPlayback() {
@@ -358,14 +642,18 @@
   }
 
   function stepForward() {
-    if (state.step >= state.sequence.length) {
+    const run = currentRun();
+    if (!run) {
+      return;
+    }
+    if (state.step >= run.edges.length) {
       state.playing = false;
       stopPlayback();
       render();
       return;
     }
     state.step += 1;
-    if (state.step >= state.sequence.length) {
+    if (state.step >= run.edges.length) {
       state.playing = false;
       stopPlayback();
     }
@@ -382,21 +670,26 @@
     render();
   }
 
-  function rebuildSequence() {
-    state.positions = buildLayout();
-    state.sequence = buildSequence();
+  async function resetRun(options = {}) {
+    const keepPlaying = options.keepPlaying ?? state.playing;
+    state.playing = keepPlaying;
     state.step = 0;
+    sequenceCaption.textContent = "loading run data";
+    await loadRun(state.promptKey, state.runFile);
+    updatePromptPanel();
     schedulePlayback();
   }
 
-  presetSelect.addEventListener("change", () => {
-    state.preset = presetSelect.value;
-    rebuildSequence();
+  promptOrderSelect.addEventListener("change", async () => {
+    state.promptKey = promptOrderSelect.value;
+    state.runFile = PROMPTS[state.promptKey].runs[0];
+    populateRunSelect();
+    await resetRun({ keepPlaying: false });
   });
 
-  nodeCountInput.addEventListener("input", () => {
-    state.nodeCount = Number(nodeCountInput.value);
-    rebuildSequence();
+  runSelect.addEventListener("change", async () => {
+    state.runFile = runSelect.value;
+    await resetRun({ keepPlaying: false });
   });
 
   speedInput.addEventListener("input", () => {
@@ -410,7 +703,11 @@
   });
 
   playToggleButton.addEventListener("click", () => {
-    if (state.step >= state.sequence.length) {
+    const run = currentRun();
+    if (!run) {
+      return;
+    }
+    if (state.step >= run.edges.length) {
       state.step = 0;
     }
     state.playing = !state.playing;
@@ -423,12 +720,32 @@
     stepForward();
   });
 
-  resetButton.addEventListener("click", () => {
-    state.step = 0;
+  resetButton.addEventListener("click", async () => {
     state.playing = false;
     stopPlayback();
+    state.step = 0;
+    await loadRun(state.promptKey, state.runFile);
     render();
   });
 
-  rebuildSequence();
+  async function init() {
+    try {
+      state.data = await loadBaseData();
+      promptOrderSelect.value = state.promptKey;
+      populateRunSelect();
+      await resetRun({ keepPlaying: true });
+    } catch (error) {
+      stopPlayback();
+      state.playing = false;
+      sequenceStatusChip.textContent = "Error";
+      sequenceLengthChip.textContent = "--";
+      sequenceQualityChip.textContent = "--";
+      sequenceStatusTitle.textContent = "Data load failed";
+      sequenceCaption.textContent = "Could not load LLM sequence data";
+      runSummary.innerHTML = `<li>${error.message}</li>`;
+      console.error(error);
+    }
+  }
+
+  init();
 })();

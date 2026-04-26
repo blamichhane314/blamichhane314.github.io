@@ -1,0 +1,31 @@
+TASK: Generate an undirected interaction graph for Game of Thrones Season 1 using ONLY the allowed character IDs below (exact spellings).
+
+ALLOWED IDS (closed world; exact IDs only):
+NED, TYRION, CATELYN, ROBERT, DAENERYS, JON, CERSEI, ROBB, SANSA, LITTLEFINGER, JOFFREY, ARYA, BRAN, JAIME, VARYS, JORAH, THEON, SAM, VISERYS, DROGO, RENLY, PYP, JEOR, BRONN, MAESTER_LUWIN, LYSA, HOUND, GRENN, JORY_CASSEL, BARRISTAN, BENJEN, DOREAH, MIRRI_MAZ_DUUR, GREATJON_UMBER, ALLISER_THORNE, LORAS, IRRI, MAESTER_AEMON, SYRIO_FOREL, WALDER, MERYN_TRANT, ILLYRIO, MORD, JON_ARRYN, AERYS, KEVAN, GENDRY, BAELOR, LANCEL, JANOS
+
+INTERACTION CRITERIA (S1 only — use ALL of the following exactly):
+1. Character A speaks directly after Character B
+2. Character A speaks about Character B
+3. Character C speaks about Character A and Character B
+4. Character A and Character B are mentioned in the same stage direction
+5. Character A and Character B appear in a scene together
+
+STRICT RULES:
+- Use ONLY the allowed IDs above (no titles, surnames, nicknames, or new names).
+- Undirected graph: include each pair once; do not output both (A, B) and (B, A).
+- No self-loops (A != B).
+- No commentary or explanations.
+- Do not include animals, places, groups, or labels.
+
+REQUIRED OUTPUT (JSON object only; begin with '{'):
+{
+  "edges": [["ID1", "ID2"], ...]
+}
+
+JSON CONSTRAINTS:
+- edges: array of 2-item arrays; both items must be from the allowed ID list; no duplicates when treated as undirected; no self-loops.
+
+IMPORTANT:
+- Return ONLY the JSON object; no prose.
+- Do not invent or expand beyond the allowed IDs.
+- Include as many valid S1 interactions as you can, including minor ones; there is no artificial limit.
