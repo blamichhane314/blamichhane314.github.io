@@ -53,7 +53,7 @@
 
   const canvas = document.getElementById("sequence-canvas");
   const promptOrderSelect = document.getElementById("prompt-order");
-  const modelSelect = document.getElementById("sequence-model");
+  const modelTabs = document.getElementById("sequence-model-tabs");
   const runSelect = document.getElementById("sequence-run");
   const speedInput = document.getElementById("sequence-speed");
   const playToggleButton = document.getElementById("sequence-play-toggle");
@@ -183,6 +183,32 @@
     return anchors;
   }
 
+  function normalizePositions(positions, margin = 88) {
+    const entries = [...positions.values()];
+    const xs = entries.map((item) => item.x);
+    const ys = entries.map((item) => item.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const width = Math.max(1, maxX - minX);
+    const height = Math.max(1, maxY - minY);
+    const scale = Math.min(
+      (bounds.width - margin * 2) / width,
+      (bounds.height - margin * 2) / height
+    );
+
+    const normalized = new Map();
+    positions.forEach((position, key) => {
+      normalized.set(key, {
+        x: margin + (position.x - minX) * scale,
+        y: margin + (position.y - minY) * scale,
+      });
+    });
+
+    return normalized;
+  }
+
   function relaxLayout(nodes, edges, anchors, weightByNode) {
     const positions = new Map();
     nodes.forEach((node) => {
@@ -257,7 +283,7 @@
       });
     }
 
-    return positions;
+    return normalizePositions(positions);
   }
 
   async function loadBaseData() {
@@ -489,15 +515,14 @@
     }
   }
 
-  function populateModelSelect() {
+  function populateModelTabs() {
     syncModelAndRunState();
-    const options = currentPromptModels()
+    modelTabs.innerHTML = currentPromptModels()
       .map((entry) => {
-        const selected = entry.modelKey === state.modelKey ? " selected" : "";
-        return `<option value="${entry.modelKey}"${selected}>${entry.modelLabel}</option>`;
+        const active = entry.modelKey === state.modelKey ? " is-active" : "";
+        return `<button class="model-chip${active}" type="button" data-model-key="${entry.modelKey}">${entry.modelLabel}</button>`;
       })
       .join("");
-    modelSelect.innerHTML = options;
     const activeModel = currentPromptModels().find((item) => item.modelKey === state.modelKey);
     modelLabel.textContent = activeModel ? activeModel.modelLabel : "--";
   }
@@ -753,10 +778,12 @@
 
   async function resetRun(options = {}) {
     const keepPlaying = options.keepPlaying ?? state.playing;
+    const initialStep = options.initialStep ?? 0;
     state.playing = keepPlaying;
     state.step = 0;
     sequenceCaption.textContent = "loading run data";
-    await loadRun(state.promptKey, state.runFile);
+    const run = await loadRun(state.promptKey, state.runFile);
+    state.step = Math.min(initialStep, run.edges.length);
     updatePromptPanel();
     schedulePlayback();
   }
@@ -765,21 +792,30 @@
     state.promptKey = promptOrderSelect.value;
     state.modelKey = null;
     state.runFile = null;
-    populateModelSelect();
+    populateModelTabs();
     populateRunSelect();
-    await resetRun({ keepPlaying: false });
+    await resetRun({ keepPlaying: false, initialStep: 1 });
   });
 
-  modelSelect.addEventListener("change", async () => {
-    state.modelKey = modelSelect.value;
+  modelTabs.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-model-key]");
+    if (!button) {
+      return;
+    }
+    const nextModel = button.getAttribute("data-model-key");
+    if (!nextModel || nextModel === state.modelKey) {
+      return;
+    }
+    state.modelKey = nextModel;
     state.runFile = null;
+    populateModelTabs();
     populateRunSelect();
-    await resetRun({ keepPlaying: false });
+    await resetRun({ keepPlaying: false, initialStep: 1 });
   });
 
   runSelect.addEventListener("change", async () => {
     state.runFile = runSelect.value;
-    await resetRun({ keepPlaying: false });
+    await resetRun({ keepPlaying: false, initialStep: 1 });
   });
 
   speedInput.addEventListener("input", () => {
@@ -822,7 +858,7 @@
     try {
       state.data = await loadBaseData();
       promptOrderSelect.value = state.promptKey;
-      populateModelSelect();
+      populateModelTabs();
       populateRunSelect();
       await resetRun({ keepPlaying: true });
     } catch (error) {

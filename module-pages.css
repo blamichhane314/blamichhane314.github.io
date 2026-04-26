@@ -303,6 +303,37 @@ a {
   margin: 0;
 }
 
+.model-filter-block {
+  margin-top: 14px;
+}
+
+.model-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.model-chip {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--muted);
+  min-height: 34px;
+  padding: 0 10px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.model-chip.is-active {
+  border-color: var(--line-strong);
+  background: rgba(42, 44, 56, 0.9);
+  color: var(--paper);
+}
+
 .prompt-details {
   margin-top: 16px;
   border-top: 1px solid var(--line);
