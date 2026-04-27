@@ -36,12 +36,12 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(42, 44, 56, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.035) 1px, transparent 1px),
-    linear-gradient(rgba(42, 44, 56, 0.085) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.085) 1px, transparent 1px);
+    linear-gradient(rgba(42, 44, 56, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.018) 1px, transparent 1px),
+    linear-gradient(rgba(42, 44, 56, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.045) 1px, transparent 1px);
   background-size: 32px 32px, 32px 32px, 128px 128px, 128px 128px;
-  opacity: 0.7;
+  opacity: 0.42;
 }
 
 a {
@@ -128,8 +128,8 @@ a {
   border-bottom: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
-    linear-gradient(rgba(42, 44, 56, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.024) 1px, transparent 1px);
+    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
   background-size: auto, 26px 26px, 26px 26px;
 }
 
@@ -259,8 +259,8 @@ a {
   border: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
-    linear-gradient(rgba(42, 44, 56, 0.024) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.024) 1px, transparent 1px);
+    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
   background-size: auto, 26px 26px, 26px 26px;
 }
 
@@ -278,10 +278,10 @@ a {
   position: relative;
   min-height: 680px;
   background:
-    linear-gradient(rgba(42, 44, 56, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.028) 1px, transparent 1px),
-    linear-gradient(rgba(42, 44, 56, 0.075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.075) 1px, transparent 1px),
+    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(rgba(42, 44, 56, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.04) 1px, transparent 1px),
     rgba(255, 255, 255, 0.4);
   background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px, auto;
 }
