@@ -103,27 +103,29 @@
                 <button class="module-button" id="sequence-reset" type="button">Reset</button>
               </div>
             </article>
-
-            <article class="compact-card log-card">
-              <p class="panel-label" id="sequence-status-title">Current emission</p>
-              <div class="status-line">
-                <span class="status-chip" id="sequence-status-chip">Running</span>
-                <span class="status-chip" id="sequence-length-chip">0 of 0</span>
-                <span class="status-chip" id="sequence-quality-chip">--</span>
-              </div>
-              <ol class="sequence-log" id="sequence-log"></ol>
-            </article>
-
-            <article class="compact-card log-card">
-              <p class="panel-label">Overlay</p>
-              <div class="legend-list">
-                <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth</span></div>
-                <div class="legend-item"><span class="legend-swatch correct"></span><span>correct</span></div>
-                <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated</span></div>
-              </div>
-              <ul class="summary-list dynamic-list" id="run-summary"></ul>
-            </article>
           </aside>
+        </div>
+
+        <div class="llm-bottom-strip">
+          <article class="compact-card log-card llm-bottom-card">
+            <p class="panel-label" id="sequence-status-title">Current emission</p>
+            <div class="status-line">
+              <span class="status-chip" id="sequence-status-chip">Running</span>
+              <span class="status-chip" id="sequence-length-chip">0 of 0</span>
+              <span class="status-chip" id="sequence-quality-chip">--</span>
+            </div>
+            <ol class="sequence-log" id="sequence-log"></ol>
+          </article>
+
+          <article class="compact-card log-card llm-bottom-card">
+            <p class="panel-label">Overlay</p>
+            <div class="legend-list">
+              <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth</span></div>
+              <div class="legend-item"><span class="legend-swatch correct"></span><span>correct</span></div>
+              <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated</span></div>
+            </div>
+            <ul class="summary-list dynamic-list" id="run-summary"></ul>
+          </article>
         </div>
       </section>
     </main>

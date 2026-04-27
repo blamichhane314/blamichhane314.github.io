@@ -304,6 +304,23 @@ a {
   background: rgba(255, 252, 247, 0.34);
 }
 
+.llm-bottom-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.llm-bottom-card {
+  margin: 0;
+  padding: 16px;
+  border-top: 0;
+}
+
+.llm-bottom-card + .llm-bottom-card {
+  border-left: 1px solid var(--line);
+}
+
 .compact-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -487,7 +504,7 @@ a {
   list-style: none;
   padding-left: 0;
   margin-top: 12px;
-  max-height: 260px;
+  max-height: 220px;
   overflow: auto;
 }
 
@@ -683,6 +700,15 @@ a {
   .llm-frame .graph-stage {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+
+  .llm-bottom-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .llm-bottom-card + .llm-bottom-card {
+    border-left: 0;
+    border-top: 1px solid var(--line);
   }
 
   .side-panel {
