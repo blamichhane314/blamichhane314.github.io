@@ -1,50 +1,70 @@
 (() => {
   const svgNs = "http://www.w3.org/2000/svg";
-  const bounds = { width: 960, height: 620, padX: 72, padY: 72 };
+  const graphBounds = { width: 480, height: 520, padX: 44, padY: 48 };
+  const distributionBounds = { width: 960, height: 260 };
+
   const state = {
-    model: "er",
-    nodeCount: 14,
-    density: 28,
-    source: 0,
-    target: 1,
-    selectionMode: "source",
-    seed: 1,
-    graph: null,
+    nodeCount: 16,
+    sampleCount: 80,
+    statKey: "edgeCount",
+    pairSeed: (Date.now() >>> 0) ^ 0x31751,
+    batchSeed: (Date.now() >>> 0) ^ 0x91a4b,
+    graphA: {
+      model: "er",
+      density: 28,
+      graph: null,
+    },
+    graphB: {
+      model: "sbm",
+      density: 28,
+      graph: null,
+    },
+    batch: null,
   };
 
-  const canvas = document.getElementById("graph-lab-canvas");
-  const modelSelect = document.getElementById("graph-model");
+  const graphACanvas = document.getElementById("graph-a-canvas");
+  const graphBCanvas = document.getElementById("graph-b-canvas");
+  const distributionCanvas = document.getElementById("distribution-canvas");
+
+  const graphAModelSelect = document.getElementById("graph-a-model");
+  const graphBModelSelect = document.getElementById("graph-b-model");
+  const graphADensityInput = document.getElementById("graph-a-density");
+  const graphBDensityInput = document.getElementById("graph-b-density");
   const nodeCountInput = document.getElementById("graph-node-count");
-  const densityInput = document.getElementById("graph-density");
-  const sourceSelect = document.getElementById("graph-source");
-  const targetSelect = document.getElementById("graph-target");
-  const regenerateButton = document.getElementById("graph-regenerate");
-  const shufflePairButton = document.getElementById("graph-shuffle-pair");
+  const sampleCountInput = document.getElementById("batch-sample-count");
+  const batchStatisticSelect = document.getElementById("batch-statistic");
+  const regeneratePairButton = document.getElementById("graph-regenerate-pair");
+  const runBatchButton = document.getElementById("graph-run-batch");
 
-  const modelLabel = document.getElementById("graph-model-label");
-  const nodeCountValue = document.getElementById("node-count-value");
-  const densityValue = document.getElementById("density-value");
-  const sourceLabel = document.getElementById("source-label");
-  const targetLabel = document.getElementById("target-label");
-  const surfaceCaption = document.getElementById("surface-caption");
-
-  const statNodeCount = document.getElementById("stat-node-count");
-  const statEdgeCount = document.getElementById("stat-edge-count");
-  const statComponents = document.getElementById("stat-components");
-  const statAveragePath = document.getElementById("stat-average-path");
-
-  const distanceTitle = document.getElementById("distance-title");
-  const distanceShortest = document.getElementById("distance-shortest");
-  const distanceDegreeGap = document.getElementById("distance-degree-gap");
-  const distanceCommonNeighbors = document.getElementById("distance-common-neighbors");
-  const distanceMembership = document.getElementById("distance-membership");
-  const pathChip = document.getElementById("path-chip");
-  const densityChip = document.getElementById("density-chip");
+  const graphlabCaption = document.getElementById("graphlab-caption");
+  const graphAModelLabel = document.getElementById("graph-a-model-label");
+  const graphBModelLabel = document.getElementById("graph-b-model-label");
+  const graphADensityValue = document.getElementById("graph-a-density-value");
+  const graphBDensityValue = document.getElementById("graph-b-density-value");
+  const graphNodeCountValue = document.getElementById("graph-node-count-value");
+  const batchSampleCountValue = document.getElementById("batch-sample-count-value");
+  const batchStatLabel = document.getElementById("batch-stat-label");
+  const graphASubtitle = document.getElementById("graph-a-subtitle");
+  const graphBSubtitle = document.getElementById("graph-b-subtitle");
+  const pairSummary = document.getElementById("pair-summary");
+  const batchSummary = document.getElementById("batch-summary");
+  const batchStatChip = document.getElementById("batch-stat-chip");
+  const batchCountChip = document.getElementById("batch-count-chip");
 
   const modelNames = {
     er: "Erdos-Renyi",
     sbm: "Stochastic Block Model",
     lattice: "Ring Lattice",
+  };
+
+  const statLabels = {
+    edgeCount: "Edge count",
+    density: "Density",
+    components: "Components",
+    avgDegree: "Average degree",
+    avgPath: "Average path",
+    clustering: "Clustering",
+    triangles: "Triangles",
   };
 
   function mulberry32(seed) {
@@ -61,10 +81,6 @@
     return Math.max(min, Math.min(max, value));
   }
 
-  function labelFor(index) {
-    return `A${String(index + 1).padStart(2, "0")}`;
-  }
-
   function edgeKey(a, b) {
     return a < b ? `${a}-${b}` : `${b}-${a}`;
   }
@@ -74,13 +90,57 @@
     position.vy += dy;
   }
 
-  function buildInitialPositions(count, rand, blocks) {
-    const cx = bounds.width / 2;
-    const cy = bounds.height / 2;
+  function metricValue(metrics, key) {
+    if (key === "density") {
+      return metrics.density * 100;
+    }
+    return metrics[key];
+  }
 
-    if (state.model === "lattice") {
-      const rx = 320;
-      const ry = 220;
+  function formatValue(key, value) {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return "--";
+    }
+    if (key === "edgeCount" || key === "components" || key === "triangles") {
+      return String(Math.round(value));
+    }
+    if (key === "density") {
+      return `${value.toFixed(1)}%`;
+    }
+    return value.toFixed(2);
+  }
+
+  function mean(values) {
+    return values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : 0;
+  }
+
+  function standardDeviation(values) {
+    if (!values.length) {
+      return 0;
+    }
+    const avg = mean(values);
+    const variance = values.reduce((sum, value) => sum + (value - avg) ** 2, 0) / values.length;
+    return Math.sqrt(variance);
+  }
+
+  function median(values) {
+    if (!values.length) {
+      return 0;
+    }
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  function buildInitialPositions(model, count, rand, blocks) {
+    const cx = graphBounds.width / 2;
+    const cy = graphBounds.height / 2;
+
+    if (model === "lattice") {
+      const rx = 170;
+      const ry = 180;
       return Array.from({ length: count }, (_, index) => {
         const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
         return {
@@ -92,37 +152,37 @@
       });
     }
 
-    if (state.model === "sbm") {
+    if (model === "sbm") {
       return Array.from({ length: count }, (_, index) => {
-        const anchorX = blocks[index] === 0 ? 310 : 650;
-        const anchorY = cy + ((index % 6) - 2.5) * 34;
+        const anchorX = blocks[index] === 0 ? 150 : 330;
+        const anchorY = cy + ((index % 8) - 3.5) * 26;
         return {
-          x: anchorX + (rand() - 0.5) * 80,
-          y: anchorY + (rand() - 0.5) * 80,
+          x: anchorX + (rand() - 0.5) * 48,
+          y: anchorY + (rand() - 0.5) * 60,
           vx: 0,
           vy: 0,
         };
       });
     }
 
-    const rx = 300;
-    const ry = 210;
+    const rx = 165;
+    const ry = 175;
     return Array.from({ length: count }, (_, index) => {
       const angle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
-      const jitter = 0.88 + rand() * 0.2;
+      const jitter = 0.9 + rand() * 0.18;
       return {
-        x: cx + Math.cos(angle) * rx * jitter + (rand() - 0.5) * 36,
-        y: cy + Math.sin(angle) * ry * jitter + (rand() - 0.5) * 26,
+        x: cx + Math.cos(angle) * rx * jitter + (rand() - 0.5) * 26,
+        y: cy + Math.sin(angle) * ry * jitter + (rand() - 0.5) * 24,
         vx: 0,
         vy: 0,
       };
     });
   }
 
-  function relaxPositions(positions, adjacency, edges, blocks) {
-    const iterations = state.model === "lattice" ? 80 : 180;
-    const cx = bounds.width / 2;
-    const cy = bounds.height / 2;
+  function relaxPositions(model, positions, adjacency, edges, blocks, rand) {
+    const iterations = model === "lattice" ? 70 : 150;
+    const cx = graphBounds.width / 2;
+    const cy = graphBounds.height / 2;
 
     for (let step = 0; step < iterations; step += 1) {
       positions.forEach((position) => {
@@ -138,12 +198,12 @@
           let dy = b.y - a.y;
           let distSq = dx * dx + dy * dy;
           if (distSq < 0.01) {
-            dx = 0.5 - Math.random();
-            dy = 0.5 - Math.random();
+            dx = 0.5 - rand();
+            dy = 0.5 - rand();
             distSq = dx * dx + dy * dy;
           }
           const dist = Math.sqrt(distSq);
-          const repulsion = 3400 / distSq;
+          const repulsion = 2400 / distSq;
           const fx = (dx / dist) * repulsion;
           const fy = (dy / dist) * repulsion;
           addVector(a, -fx, -fy);
@@ -158,12 +218,12 @@
         const dy = b.y - a.y;
         const dist = Math.max(1, Math.hypot(dx, dy));
         const idealLength =
-          state.model === "lattice"
-            ? 104
-            : state.model === "sbm" && blocks[from] === blocks[to]
-              ? 96
-              : 132;
-        const spring = (dist - idealLength) * 0.012;
+          model === "lattice"
+            ? 84
+            : model === "sbm" && blocks[from] === blocks[to]
+              ? 72
+              : 112;
+        const spring = (dist - idealLength) * 0.015;
         const fx = (dx / dist) * spring;
         const fy = (dy / dist) * spring;
         addVector(a, fx, fy);
@@ -171,22 +231,142 @@
       });
 
       positions.forEach((position, index) => {
-        const centerX =
-          state.model === "sbm" ? (blocks[index] === 0 ? 320 : 640) : cx;
-        const centerY = cy;
-        position.vx += (centerX - position.x) * 0.0024;
-        position.vy += (centerY - position.y) * 0.0024;
-
-        position.x = clamp(position.x + position.vx, bounds.padX, bounds.width - bounds.padX);
-        position.y = clamp(position.y + position.vy, bounds.padY, bounds.height - bounds.padY);
+        const centerX = model === "sbm" ? (blocks[index] === 0 ? 160 : 320) : cx;
+        position.vx += (centerX - position.x) * 0.003;
+        position.vy += (cy - position.y) * 0.003;
+        position.x = clamp(position.x + position.vx, graphBounds.padX, graphBounds.width - graphBounds.padX);
+        position.y = clamp(position.y + position.vy, graphBounds.padY, graphBounds.height - graphBounds.padY);
       });
     }
   }
 
-  function buildGraph() {
-    const rand = mulberry32(state.seed);
-    const n = state.nodeCount;
-    const p = state.density / 100;
+  function bfsGraph(adjacency, start) {
+    const distances = Array(adjacency.length).fill(Infinity);
+    const queue = [start];
+    distances[start] = 0;
+
+    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+      const node = queue[cursor];
+      adjacency[node].forEach((neighbor) => {
+        if (distances[neighbor] !== Infinity) {
+          return;
+        }
+        distances[neighbor] = distances[node] + 1;
+        queue.push(neighbor);
+      });
+    }
+
+    return distances;
+  }
+
+  function componentCount(adjacency) {
+    const seen = Array(adjacency.length).fill(false);
+    let components = 0;
+
+    for (let index = 0; index < adjacency.length; index += 1) {
+      if (seen[index]) {
+        continue;
+      }
+      components += 1;
+      const queue = [index];
+      seen[index] = true;
+
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const node = queue[cursor];
+        adjacency[node].forEach((neighbor) => {
+          if (seen[neighbor]) {
+            return;
+          }
+          seen[neighbor] = true;
+          queue.push(neighbor);
+        });
+      }
+    }
+
+    return components;
+  }
+
+  function averagePathLength(adjacency) {
+    let total = 0;
+    let pairs = 0;
+
+    for (let i = 0; i < adjacency.length; i += 1) {
+      const distances = bfsGraph(adjacency, i);
+      for (let j = i + 1; j < adjacency.length; j += 1) {
+        if (distances[j] === Infinity) {
+          continue;
+        }
+        total += distances[j];
+        pairs += 1;
+      }
+    }
+
+    return pairs ? total / pairs : null;
+  }
+
+  function triangleCount(adjacency) {
+    let triangles = 0;
+    for (let i = 0; i < adjacency.length; i += 1) {
+      for (let j = i + 1; j < adjacency.length; j += 1) {
+        if (!adjacency[i].has(j)) {
+          continue;
+        }
+        for (let k = j + 1; k < adjacency.length; k += 1) {
+          if (adjacency[i].has(k) && adjacency[j].has(k)) {
+            triangles += 1;
+          }
+        }
+      }
+    }
+    return triangles;
+  }
+
+  function averageClustering(adjacency) {
+    let total = 0;
+
+    adjacency.forEach((neighbors) => {
+      const list = [...neighbors];
+      const k = list.length;
+      if (k < 2) {
+        return;
+      }
+      let links = 0;
+      for (let i = 0; i < list.length; i += 1) {
+        for (let j = i + 1; j < list.length; j += 1) {
+          if (adjacency[list[i]].has(list[j])) {
+            links += 1;
+          }
+        }
+      }
+      total += links / ((k * (k - 1)) / 2);
+    });
+
+    return adjacency.length ? total / adjacency.length : 0;
+  }
+
+  function computeMetrics(graph) {
+    const nodeCount = graph.adjacency.length;
+    const edgeCount = graph.edges.length;
+    const degrees = graph.adjacency.map((neighbors) => neighbors.size);
+    const possibleEdges = (nodeCount * (nodeCount - 1)) / 2;
+
+    return {
+      edgeCount,
+      density: possibleEdges ? edgeCount / possibleEdges : 0,
+      components: componentCount(graph.adjacency),
+      avgDegree: degrees.length
+        ? degrees.reduce((sum, degree) => sum + degree, 0) / degrees.length
+        : 0,
+      avgPath: averagePathLength(graph.adjacency),
+      clustering: averageClustering(graph.adjacency),
+      triangles: triangleCount(graph.adjacency),
+    };
+  }
+
+  function buildGraph(config, seed) {
+    const rand = mulberry32(seed);
+    const n = config.nodeCount;
+    const p = config.density / 100;
     const adjacency = Array.from({ length: n }, () => new Set());
     const edges = [];
     const blocks = Array.from({ length: n }, (_, index) => (index < Math.ceil(n / 2) ? 0 : 1));
@@ -200,7 +380,7 @@
       edges.push([a, b]);
     }
 
-    if (state.model === "er") {
+    if (config.model === "er") {
       for (let i = 0; i < n; i += 1) {
         for (let j = i + 1; j < n; j += 1) {
           if (rand() < p) {
@@ -210,7 +390,7 @@
       }
     }
 
-    if (state.model === "sbm") {
+    if (config.model === "sbm") {
       const within = clamp(p * 1.75, 0.18, 0.88);
       const across = clamp(p * 0.45, 0.04, 0.38);
       for (let i = 0; i < n; i += 1) {
@@ -223,7 +403,7 @@
       }
     }
 
-    if (state.model === "lattice") {
+    if (config.model === "lattice") {
       const neighbors = Math.max(1, Math.round((p * n) / 4));
       for (let i = 0; i < n; i += 1) {
         for (let step = 1; step <= neighbors; step += 1) {
@@ -231,6 +411,7 @@
           addEdge(i, (i - step + n) % n);
         }
       }
+
       const baseEdges = [...edges];
       baseEdges.forEach(([a, b]) => {
         if (rand() < p * 0.16) {
@@ -259,302 +440,404 @@
       }
     }
 
-    const positions = buildInitialPositions(n, rand, blocks);
-    relaxPositions(positions, adjacency, edges, blocks);
+    const positions = buildInitialPositions(config.model, n, rand, blocks);
+    relaxPositions(config.model, positions, adjacency, edges, blocks, rand);
 
-    return {
+    const graph = {
+      config,
       positions,
       adjacency,
       edges,
       blocks,
+      nodeCount: n,
     };
+    graph.metrics = computeMetrics(graph);
+    return graph;
   }
 
-  function bfs(start) {
-    const distances = Array(state.nodeCount).fill(Infinity);
-    const parents = Array(state.nodeCount).fill(-1);
-    const queue = [start];
-    distances[start] = 0;
+  function profileGap(metricsA, metricsB, nodeCount) {
+    const triangleScale = Math.max(1, (nodeCount * (nodeCount - 1) * (nodeCount - 2)) / 6);
+    const vectorA = [
+      metricsA.density,
+      metricsA.components / nodeCount,
+      metricsA.avgDegree / Math.max(1, nodeCount - 1),
+      (metricsA.avgPath ?? 0) / Math.max(1, nodeCount - 1),
+      metricsA.clustering,
+      metricsA.triangles / triangleScale,
+    ];
+    const vectorB = [
+      metricsB.density,
+      metricsB.components / nodeCount,
+      metricsB.avgDegree / Math.max(1, nodeCount - 1),
+      (metricsB.avgPath ?? 0) / Math.max(1, nodeCount - 1),
+      metricsB.clustering,
+      metricsB.triangles / triangleScale,
+    ];
 
-    for (let cursor = 0; cursor < queue.length; cursor += 1) {
-      const node = queue[cursor];
-      state.graph.adjacency[node].forEach((neighbor) => {
-        if (distances[neighbor] !== Infinity) {
-          return;
-        }
-        distances[neighbor] = distances[node] + 1;
-        parents[neighbor] = node;
-        queue.push(neighbor);
-      });
-    }
+    const squared = vectorA.reduce((sum, value, index) => {
+      return sum + (value - vectorB[index]) ** 2;
+    }, 0);
 
-    return { distances, parents };
+    return Math.sqrt(squared / vectorA.length);
   }
 
-  function computeComponents() {
-    const seen = Array(state.nodeCount).fill(false);
-    let components = 0;
-
-    for (let i = 0; i < state.nodeCount; i += 1) {
-      if (seen[i]) {
-        continue;
-      }
-      components += 1;
-      const queue = [i];
-      seen[i] = true;
-
-      for (let cursor = 0; cursor < queue.length; cursor += 1) {
-        const node = queue[cursor];
-        state.graph.adjacency[node].forEach((neighbor) => {
-          if (seen[neighbor]) {
-            return;
-          }
-          seen[neighbor] = true;
-          queue.push(neighbor);
-        });
-      }
-    }
-
-    return components;
+  function syncControlLabels() {
+    graphAModelLabel.textContent = modelNames[state.graphA.model];
+    graphBModelLabel.textContent = modelNames[state.graphB.model];
+    graphADensityValue.textContent = `${state.graphA.density}%`;
+    graphBDensityValue.textContent = `${state.graphB.density}%`;
+    graphNodeCountValue.textContent = String(state.nodeCount);
+    batchSampleCountValue.textContent = String(state.sampleCount);
+    batchStatLabel.textContent = statLabels[state.statKey];
+    batchStatChip.textContent = statLabels[state.statKey];
+    batchCountChip.textContent = `${state.sampleCount} samples`;
   }
 
-  function averagePathLength() {
-    let total = 0;
-    let pairs = 0;
-    for (let i = 0; i < state.nodeCount; i += 1) {
-      const { distances } = bfs(i);
-      for (let j = i + 1; j < state.nodeCount; j += 1) {
-        if (distances[j] === Infinity) {
-          continue;
-        }
-        total += distances[j];
-        pairs += 1;
-      }
-    }
-    return pairs ? total / pairs : null;
+  function graphSubtitle(graph) {
+    return `${modelNames[graph.config.model]} · ${graph.metrics.edgeCount} edges · ${formatValue("density", metricValue(graph.metrics, "density"))}`;
   }
 
-  function currentPath() {
-    const { distances, parents } = bfs(state.source);
-    if (distances[state.target] === Infinity) {
-      return null;
-    }
-    const path = [];
-    let cursor = state.target;
-    while (cursor !== -1) {
-      path.push(cursor);
-      if (cursor === state.source) {
-        break;
-      }
-      cursor = parents[cursor];
-    }
-    path.reverse();
-    return path;
-  }
+  function renderGraph(svg, graph) {
+    svg.innerHTML = "";
+    const degrees = graph.adjacency.map((neighbors) => neighbors.size);
+    const maxDegree = Math.max(...degrees, 1);
 
-  function syncSelectOptions() {
-    const options = Array.from({ length: state.nodeCount }, (_, index) => {
-      const selectedSource = index === state.source ? " selected" : "";
-      const selectedTarget = index === state.target ? " selected" : "";
-      return {
-        source: `<option value="${index}"${selectedSource}>${labelFor(index)}</option>`,
-        target: `<option value="${index}"${selectedTarget}>${labelFor(index)}</option>`,
-      };
-    });
-    sourceSelect.innerHTML = options.map((item) => item.source).join("");
-    targetSelect.innerHTML = options.map((item) => item.target).join("");
-    sourceLabel.textContent = labelFor(state.source);
-    targetLabel.textContent = labelFor(state.target);
-  }
-
-  function updateMetrics() {
-    const edgeCount = state.graph.edges.length;
-    const components = computeComponents();
-    const averagePath = averagePathLength();
-    const degrees = state.graph.adjacency.map((neighbors) => neighbors.size);
-    const path = currentPath();
-    const commonNeighbors = [...state.graph.adjacency[state.source]].filter((neighbor) =>
-      state.graph.adjacency[state.target].has(neighbor)
-    ).length;
-    const possibleEdges = (state.nodeCount * (state.nodeCount - 1)) / 2;
-    const graphDensity = possibleEdges ? edgeCount / possibleEdges : 0;
-
-    statNodeCount.textContent = String(state.nodeCount);
-    statEdgeCount.textContent = String(edgeCount);
-    statComponents.textContent = String(components);
-    statAveragePath.textContent = averagePath ? averagePath.toFixed(2) : "--";
-
-    distanceTitle.textContent = `${labelFor(state.source)} to ${labelFor(state.target)}`;
-    distanceShortest.textContent = path
-      ? `Shortest path: ${path.length - 1} hops`
-      : "Shortest path: unreachable";
-    distanceDegreeGap.textContent = `Degree difference: ${Math.abs(degrees[state.source] - degrees[state.target])}`;
-    distanceCommonNeighbors.textContent = `Common neighbors: ${commonNeighbors}`;
-
-    if (state.model === "sbm") {
-      distanceMembership.textContent =
-        state.graph.blocks[state.source] === state.graph.blocks[state.target]
-          ? "Community relation: same block"
-          : "Community relation: cross-block";
-    } else if (state.model === "lattice") {
-      distanceMembership.textContent = "Community relation: ring-local structure";
-    } else {
-      distanceMembership.textContent = "Community relation: unstructured regime";
-    }
-
-    pathChip.textContent = path ? `Path length ${path.length - 1}` : "No connecting path";
-    densityChip.textContent = `Density ${(graphDensity * 100).toFixed(1)}%`;
-  }
-
-  function renderGraph() {
-    const path = currentPath();
-    const pathEdges = new Set();
-    if (path) {
-      for (let i = 0; i < path.length - 1; i += 1) {
-        pathEdges.add(edgeKey(path[i], path[i + 1]));
-      }
-    }
-
-    canvas.innerHTML = "";
-
-    state.graph.edges.forEach(([a, b]) => {
+    graph.edges.forEach(([a, b]) => {
       const edge = document.createElementNS(svgNs, "line");
-      edge.setAttribute("x1", state.graph.positions[a].x.toFixed(2));
-      edge.setAttribute("y1", state.graph.positions[a].y.toFixed(2));
-      edge.setAttribute("x2", state.graph.positions[b].x.toFixed(2));
-      edge.setAttribute("y2", state.graph.positions[b].y.toFixed(2));
-      edge.setAttribute(
-        "class",
-        pathEdges.has(edgeKey(a, b)) ? "graph-edge path-edge" : "graph-edge"
-      );
-      canvas.appendChild(edge);
+      edge.setAttribute("x1", graph.positions[a].x.toFixed(2));
+      edge.setAttribute("y1", graph.positions[a].y.toFixed(2));
+      edge.setAttribute("x2", graph.positions[b].x.toFixed(2));
+      edge.setAttribute("y2", graph.positions[b].y.toFixed(2));
+      edge.setAttribute("class", "graph-edge");
+      svg.appendChild(edge);
     });
 
-    [state.source, state.target].forEach((index) => {
-      const halo = document.createElementNS(svgNs, "circle");
-      halo.setAttribute("cx", state.graph.positions[index].x.toFixed(2));
-      halo.setAttribute("cy", state.graph.positions[index].y.toFixed(2));
-      halo.setAttribute("r", "18");
-      halo.setAttribute("fill", "none");
-      halo.setAttribute("stroke", "rgba(42, 44, 56, 0.18)");
-      halo.setAttribute("stroke-width", "2");
-      canvas.appendChild(halo);
-    });
-
-    state.graph.positions.forEach((position, index) => {
+    graph.positions.forEach((position, index) => {
       const node = document.createElementNS(svgNs, "circle");
       const classes = ["graph-node"];
-      if (state.model === "sbm" && state.graph.blocks[index] === 1) {
+      if (graph.config.model === "sbm" && graph.blocks[index] === 1) {
         classes.push("block-b");
-      }
-      if (index === state.source || index === state.target) {
-        classes.push("selected");
       }
       node.setAttribute("class", classes.join(" "));
       node.setAttribute("cx", position.x.toFixed(2));
       node.setAttribute("cy", position.y.toFixed(2));
-      node.setAttribute("r", index === state.source || index === state.target ? "9.5" : "7");
-      node.dataset.index = String(index);
-      node.addEventListener("click", () => {
-        if (state.selectionMode === "source") {
-          state.source = index;
-          if (state.source === state.target) {
-            state.target = (state.target + 1) % state.nodeCount;
-          }
-          state.selectionMode = "target";
-        } else {
-          state.target = index;
-          if (state.target === state.source) {
-            state.source = (state.source + 1) % state.nodeCount;
-          }
-          state.selectionMode = "source";
-        }
-        refresh();
+      node.setAttribute("r", (5.2 + 3.4 * Math.sqrt(degrees[index] / maxDegree)).toFixed(2));
+      svg.appendChild(node);
+    });
+  }
+
+  function renderPairSummary() {
+    const metricsA = state.graphA.graph.metrics;
+    const metricsB = state.graphB.graph.metrics;
+    const gap = profileGap(metricsA, metricsB, state.nodeCount);
+
+    pairSummary.innerHTML = [
+      `<li>Edges: A ${formatValue("edgeCount", metricsA.edgeCount)} · B ${formatValue("edgeCount", metricsB.edgeCount)}</li>`,
+      `<li>Density: A ${formatValue("density", metricValue(metricsA, "density"))} · B ${formatValue("density", metricValue(metricsB, "density"))}</li>`,
+      `<li>Components: A ${formatValue("components", metricsA.components)} · B ${formatValue("components", metricsB.components)}</li>`,
+      `<li>Average degree: A ${formatValue("avgDegree", metricsA.avgDegree)} · B ${formatValue("avgDegree", metricsB.avgDegree)}</li>`,
+      `<li>Average path: A ${formatValue("avgPath", metricsA.avgPath)} · B ${formatValue("avgPath", metricsB.avgPath)}</li>`,
+      `<li>Clustering: A ${formatValue("clustering", metricsA.clustering)} · B ${formatValue("clustering", metricsB.clustering)}</li>`,
+      `<li>Profile gap: ${gap.toFixed(3)}</li>`,
+    ].join("");
+  }
+
+  function sampleValues(sampleList) {
+    return sampleList
+      .map((metrics) => metricValue(metrics, state.statKey))
+      .filter((value) => Number.isFinite(value));
+  }
+
+  function drawChartText(svg, x, y, text, anchor = "start") {
+    const label = document.createElementNS(svgNs, "text");
+    label.setAttribute("class", "graph-label");
+    label.setAttribute("x", x.toFixed(2));
+    label.setAttribute("y", y.toFixed(2));
+    label.setAttribute("text-anchor", anchor);
+    label.textContent = text;
+    svg.appendChild(label);
+  }
+
+  function renderDistribution() {
+    distributionCanvas.innerHTML = "";
+    if (!state.batch) {
+      return;
+    }
+
+    const valuesA = sampleValues(state.batch.samplesA);
+    const valuesB = sampleValues(state.batch.samplesB);
+    const allValues = [...valuesA, ...valuesB];
+    if (!allValues.length) {
+      return;
+    }
+
+    let minValue = Math.min(...allValues);
+    let maxValue = Math.max(...allValues);
+    if (minValue === maxValue) {
+      minValue -= 1;
+      maxValue += 1;
+    }
+
+    const binCount = clamp(Math.round(Math.sqrt(state.sampleCount) * 1.7), 8, 18);
+    const binWidth = (maxValue - minValue) / binCount;
+    const countsA = Array(binCount).fill(0);
+    const countsB = Array(binCount).fill(0);
+
+    function countInto(values, target) {
+      values.forEach((value) => {
+        const rawIndex = Math.floor((value - minValue) / binWidth);
+        const index = clamp(rawIndex, 0, binCount - 1);
+        target[index] += 1;
       });
-      canvas.appendChild(node);
+    }
+
+    countInto(valuesA, countsA);
+    countInto(valuesB, countsB);
+
+    const maxCount = Math.max(...countsA, ...countsB, 1);
+    const margin = { top: 22, right: 22, bottom: 30, left: 58 };
+    const gap = 38;
+    const width = distributionBounds.width - margin.left - margin.right;
+    const bandHeight = (distributionBounds.height - margin.top - margin.bottom - gap) / 2;
+    const topBase = margin.top + bandHeight;
+    const bottomBase = margin.top + bandHeight + gap + bandHeight;
+
+    const baselineA = document.createElementNS(svgNs, "line");
+    baselineA.setAttribute("x1", String(margin.left));
+    baselineA.setAttribute("x2", String(distributionBounds.width - margin.right));
+    baselineA.setAttribute("y1", topBase.toFixed(2));
+    baselineA.setAttribute("y2", topBase.toFixed(2));
+    baselineA.setAttribute("class", "graph-edge");
+    distributionCanvas.appendChild(baselineA);
+
+    const baselineB = document.createElementNS(svgNs, "line");
+    baselineB.setAttribute("x1", String(margin.left));
+    baselineB.setAttribute("x2", String(distributionBounds.width - margin.right));
+    baselineB.setAttribute("y1", bottomBase.toFixed(2));
+    baselineB.setAttribute("y2", bottomBase.toFixed(2));
+    baselineB.setAttribute("class", "graph-edge");
+    distributionCanvas.appendChild(baselineB);
+
+    drawChartText(distributionCanvas, margin.left, margin.top - 6, "Graph A");
+    drawChartText(distributionCanvas, margin.left, margin.top + bandHeight + gap - 6, "Graph B");
+
+    const barWidth = width / binCount;
+    countsA.forEach((count, index) => {
+      const rect = document.createElementNS(svgNs, "rect");
+      const height = (count / maxCount) * (bandHeight - 12);
+      rect.setAttribute("x", (margin.left + index * barWidth + 1).toFixed(2));
+      rect.setAttribute("y", (topBase - height).toFixed(2));
+      rect.setAttribute("width", Math.max(2, barWidth - 2).toFixed(2));
+      rect.setAttribute("height", height.toFixed(2));
+      rect.setAttribute("fill", "rgba(42, 44, 56, 0.72)");
+      distributionCanvas.appendChild(rect);
     });
 
-    [state.source, state.target].forEach((index) => {
-      const label = document.createElementNS(svgNs, "text");
-      label.setAttribute("class", "graph-label selected");
-      label.setAttribute("x", (state.graph.positions[index].x + 14).toFixed(2));
-      label.setAttribute("y", (state.graph.positions[index].y - 14).toFixed(2));
-      label.textContent = labelFor(index);
-      canvas.appendChild(label);
+    countsB.forEach((count, index) => {
+      const rect = document.createElementNS(svgNs, "rect");
+      const height = (count / maxCount) * (bandHeight - 12);
+      rect.setAttribute("x", (margin.left + index * barWidth + 1).toFixed(2));
+      rect.setAttribute("y", (bottomBase - height).toFixed(2));
+      rect.setAttribute("width", Math.max(2, barWidth - 2).toFixed(2));
+      rect.setAttribute("height", height.toFixed(2));
+      rect.setAttribute("fill", "rgba(47, 143, 78, 0.72)");
+      distributionCanvas.appendChild(rect);
     });
 
-    surfaceCaption.textContent =
-      state.selectionMode === "source"
-        ? "next click sets source node"
-        : "next click sets target node";
+    function drawMedianLine(values, baseline, color) {
+      const med = median(values);
+      const x = margin.left + ((med - minValue) / (maxValue - minValue)) * width;
+      const line = document.createElementNS(svgNs, "line");
+      line.setAttribute("x1", x.toFixed(2));
+      line.setAttribute("x2", x.toFixed(2));
+      line.setAttribute("y1", (baseline - bandHeight + 8).toFixed(2));
+      line.setAttribute("y2", baseline.toFixed(2));
+      line.setAttribute("stroke", color);
+      line.setAttribute("stroke-width", "2");
+      line.setAttribute("stroke-dasharray", "6 5");
+      distributionCanvas.appendChild(line);
+    }
+
+    drawMedianLine(valuesA, topBase, "rgba(42, 44, 56, 0.9)");
+    drawMedianLine(valuesB, bottomBase, "rgba(47, 143, 78, 0.95)");
+
+    drawChartText(distributionCanvas, margin.left, distributionBounds.height - 10, formatValue(state.statKey, minValue));
+    drawChartText(
+      distributionCanvas,
+      distributionBounds.width / 2,
+      distributionBounds.height - 10,
+      statLabels[state.statKey],
+      "middle"
+    );
+    drawChartText(
+      distributionCanvas,
+      distributionBounds.width - margin.right,
+      distributionBounds.height - 10,
+      formatValue(state.statKey, maxValue),
+      "end"
+    );
   }
 
-  function refresh() {
-    modelLabel.textContent = modelNames[state.model];
-    nodeCountValue.textContent = String(state.nodeCount);
-    densityValue.textContent = `${state.density}%`;
-    syncSelectOptions();
-    updateMetrics();
-    renderGraph();
+  function renderBatchSummary() {
+    if (!state.batch) {
+      return;
+    }
+
+    const valuesA = sampleValues(state.batch.samplesA);
+    const valuesB = sampleValues(state.batch.samplesB);
+    const meanA = mean(valuesA);
+    const meanB = mean(valuesB);
+    const sdA = standardDeviation(valuesA);
+    const sdB = standardDeviation(valuesB);
+    const medianA = median(valuesA);
+    const medianB = median(valuesB);
+
+    batchSummary.innerHTML = [
+      `<li>Graph A mean: ${formatValue(state.statKey, meanA)} · sd ${formatValue(state.statKey, sdA)}</li>`,
+      `<li>Graph B mean: ${formatValue(state.statKey, meanB)} · sd ${formatValue(state.statKey, sdB)}</li>`,
+      `<li>Medians: A ${formatValue(state.statKey, medianA)} · B ${formatValue(state.statKey, medianB)}</li>`,
+      `<li>Mean gap: ${formatValue(state.statKey, Math.abs(meanA - meanB))}</li>`,
+    ].join("");
   }
 
-  function regenerateGraph(newSeed = true) {
+  function renderPair() {
+    syncControlLabels();
+    graphlabCaption.textContent = `${modelNames[state.graphA.model]} vs ${modelNames[state.graphB.model]} · ${state.nodeCount} nodes`;
+    graphASubtitle.textContent = graphSubtitle(state.graphA.graph);
+    graphBSubtitle.textContent = graphSubtitle(state.graphB.graph);
+    renderGraph(graphACanvas, state.graphA.graph);
+    renderGraph(graphBCanvas, state.graphB.graph);
+    renderPairSummary();
+  }
+
+  function renderBatch() {
+    syncControlLabels();
+    renderDistribution();
+    renderBatchSummary();
+  }
+
+  function rebuildPair(newSeed = true) {
     if (newSeed) {
-      state.seed = (Date.now() + Math.floor(Math.random() * 100000)) >>> 0;
+      state.pairSeed = ((Date.now() + Math.floor(Math.random() * 100000)) >>> 0) ^ 0x31751;
     }
-    state.graph = buildGraph();
-    if (state.source >= state.nodeCount) {
-      state.source = 0;
-    }
-    if (state.target >= state.nodeCount || state.target === state.source) {
-      state.target = Math.min(1, state.nodeCount - 1);
-    }
-    refresh();
+
+    const configA = {
+      model: state.graphA.model,
+      density: state.graphA.density,
+      nodeCount: state.nodeCount,
+    };
+    const configB = {
+      model: state.graphB.model,
+      density: state.graphB.density,
+      nodeCount: state.nodeCount,
+    };
+
+    state.graphA.graph = buildGraph(configA, state.pairSeed + 17);
+    state.graphB.graph = buildGraph(configB, state.pairSeed + 113);
+    renderPair();
   }
 
-  function shufflePair() {
-    state.source = Math.floor(Math.random() * state.nodeCount);
-    do {
-      state.target = Math.floor(Math.random() * state.nodeCount);
-    } while (state.target === state.source && state.nodeCount > 1);
-    state.selectionMode = "source";
-    refresh();
+  function rebuildBatch(newSeed = true) {
+    if (newSeed) {
+      state.batchSeed = ((Date.now() + Math.floor(Math.random() * 100000)) >>> 0) ^ 0x91a4b;
+    }
+
+    const configA = {
+      model: state.graphA.model,
+      density: state.graphA.density,
+      nodeCount: state.nodeCount,
+    };
+    const configB = {
+      model: state.graphB.model,
+      density: state.graphB.density,
+      nodeCount: state.nodeCount,
+    };
+
+    const samplesA = [];
+    const samplesB = [];
+
+    for (let index = 0; index < state.sampleCount; index += 1) {
+      const graphA = buildGraph(configA, state.batchSeed + index * 7919 + 11);
+      const graphB = buildGraph(configB, state.batchSeed + index * 7919 + 97);
+      samplesA.push(graphA.metrics);
+      samplesB.push(graphB.metrics);
+    }
+
+    state.batch = { samplesA, samplesB };
+    renderBatch();
   }
 
-  modelSelect.addEventListener("change", () => {
-    state.model = modelSelect.value;
-    regenerateGraph();
-  });
-
-  nodeCountInput.addEventListener("input", () => {
+  function syncStateFromControls() {
+    state.graphA.model = graphAModelSelect.value;
+    state.graphB.model = graphBModelSelect.value;
+    state.graphA.density = Number(graphADensityInput.value);
+    state.graphB.density = Number(graphBDensityInput.value);
     state.nodeCount = Number(nodeCountInput.value);
-    regenerateGraph();
+    state.sampleCount = Number(sampleCountInput.value);
+    state.statKey = batchStatisticSelect.value;
+  }
+
+  function updateLabelsOnly() {
+    syncStateFromControls();
+    syncControlLabels();
+  }
+
+  graphAModelSelect.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+    rebuildBatch(true);
   });
 
-  densityInput.addEventListener("input", () => {
-    state.density = Number(densityInput.value);
-    regenerateGraph();
+  graphBModelSelect.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+    rebuildBatch(true);
   });
 
-  sourceSelect.addEventListener("change", () => {
-    state.source = Number(sourceSelect.value);
-    if (state.source === state.target) {
-      state.target = (state.target + 1) % state.nodeCount;
-    }
-    refresh();
+  graphADensityInput.addEventListener("input", updateLabelsOnly);
+  graphBDensityInput.addEventListener("input", updateLabelsOnly);
+  nodeCountInput.addEventListener("input", updateLabelsOnly);
+  sampleCountInput.addEventListener("input", updateLabelsOnly);
+
+  graphADensityInput.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+    rebuildBatch(true);
   });
 
-  targetSelect.addEventListener("change", () => {
-    state.target = Number(targetSelect.value);
-    if (state.target === state.source) {
-      state.source = (state.source + 1) % state.nodeCount;
-    }
-    refresh();
+  graphBDensityInput.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+    rebuildBatch(true);
   });
 
-  regenerateButton.addEventListener("click", () => regenerateGraph(true));
-  shufflePairButton.addEventListener("click", shufflePair);
+  nodeCountInput.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+    rebuildBatch(true);
+  });
 
-  state.seed = (Date.now() >>> 0) ^ 0x51f15c;
-  regenerateGraph(false);
+  sampleCountInput.addEventListener("change", () => {
+    syncStateFromControls();
+    rebuildBatch(true);
+  });
+
+  batchStatisticSelect.addEventListener("change", () => {
+    syncStateFromControls();
+    renderBatch();
+  });
+
+  regeneratePairButton.addEventListener("click", () => {
+    syncStateFromControls();
+    rebuildPair(true);
+  });
+
+  runBatchButton.addEventListener("click", () => {
+    syncStateFromControls();
+    rebuildBatch(true);
+  });
+
+  syncControlLabels();
+  rebuildPair(false);
+  rebuildBatch(false);
 })();

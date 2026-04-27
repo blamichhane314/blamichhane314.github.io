@@ -15,153 +15,135 @@
       <a class="toolbar-link" href="./index.html">Back to Home</a>
       <div class="toolbar-center">
         <span class="toolbar-title">Graph Lab</span>
-        <span class="toolbar-subtitle">Simulator / Distance Diagnostics / Metric Space View</span>
+        <span class="toolbar-subtitle">Pairwise Comparison / Batch Statistics</span>
       </div>
       <a class="toolbar-chip" href="./research.html">Research Page</a>
     </header>
 
     <main class="module-main">
-      <section class="panel hero-panel">
+      <section class="surface-panel graphlab-panel">
         <div class="panel-head">
-          <span>Module 01</span>
-          <span>Graph-Valued Inference</span>
+          <span>Graph Comparison</span>
+          <span id="graphlab-caption">loading pair</span>
         </div>
 
-        <div class="hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">Graph simulator and distance calculator</p>
-            <h1>Generate a graph, select two nodes, inspect the geometry.</h1>
-            <p>
-              A local prototype for the graph-valued inference direction. The current surface
-              focuses on graph generation, shortest-path structure, and simple node-level
-              diagnostics as an entry point to richer graph-space comparisons.
-            </p>
-          </div>
-
-          <aside class="hero-meta">
-            <article class="meta-card">
-              <p class="panel-label">Current Scope</p>
-              <h2>Interactive graph surface</h2>
-              <p>Switch graph families, compare node pairs, and inspect how local structure changes across regimes.</p>
+        <div class="graphlab-frame">
+          <div class="graphlab-compare-grid">
+            <article class="graphlab-graph-card">
+              <div class="graphlab-graph-head">
+                <span>Graph A</span>
+                <span id="graph-a-subtitle">--</span>
+              </div>
+              <div class="mini-graph-stage">
+                <svg id="graph-a-canvas" viewBox="0 0 480 520" aria-label="Graph A canvas"></svg>
+              </div>
             </article>
 
-            <article class="meta-card">
-              <p class="panel-label">Use</p>
-              <h2>Start with the graph field</h2>
-              <p>The controls and notes are secondary. The graph should be the main reading surface.</p>
+            <article class="graphlab-graph-card">
+              <div class="graphlab-graph-head">
+                <span>Graph B</span>
+                <span id="graph-b-subtitle">--</span>
+              </div>
+              <div class="mini-graph-stage">
+                <svg id="graph-b-canvas" viewBox="0 0 480 520" aria-label="Graph B canvas"></svg>
+              </div>
+            </article>
+          </div>
+
+          <aside class="graphlab-sidebar">
+            <article class="compact-card control-card">
+              <p class="panel-label">Pair Settings</p>
+
+              <label>
+                <span class="select-line"><span>Graph A</span><span class="range-value" id="graph-a-model-label">Erdos-Renyi</span></span>
+                <select id="graph-a-model">
+                  <option value="er">Erdos-Renyi</option>
+                  <option value="sbm">Stochastic block model</option>
+                  <option value="lattice">Ring lattice</option>
+                </select>
+              </label>
+
+              <label>
+                <span class="range-line"><span>A density</span><span class="range-value" id="graph-a-density-value">28%</span></span>
+                <input id="graph-a-density" type="range" min="12" max="60" step="1" value="28" />
+              </label>
+
+              <label>
+                <span class="select-line"><span>Graph B</span><span class="range-value" id="graph-b-model-label">Stochastic Block Model</span></span>
+                <select id="graph-b-model">
+                  <option value="er">Erdos-Renyi</option>
+                  <option value="sbm" selected>Stochastic block model</option>
+                  <option value="lattice">Ring lattice</option>
+                </select>
+              </label>
+
+              <label>
+                <span class="range-line"><span>B density</span><span class="range-value" id="graph-b-density-value">28%</span></span>
+                <input id="graph-b-density" type="range" min="12" max="60" step="1" value="28" />
+              </label>
+
+              <label>
+                <span class="range-line"><span>Nodes</span><span class="range-value" id="graph-node-count-value">16</span></span>
+                <input id="graph-node-count" type="range" min="10" max="26" step="1" value="16" />
+              </label>
+
+              <div class="button-row">
+                <button class="module-button primary" id="graph-regenerate-pair" type="button">Regenerate Pair</button>
+                <button class="module-button" id="graph-run-batch" type="button">Resample Batch</button>
+              </div>
+            </article>
+
+            <article class="compact-card control-card">
+              <p class="panel-label">Batch Settings</p>
+
+              <label>
+                <span class="range-line"><span>Samples</span><span class="range-value" id="batch-sample-count-value">80</span></span>
+                <input id="batch-sample-count" type="range" min="24" max="180" step="4" value="80" />
+              </label>
+
+              <label>
+                <span class="select-line"><span>Statistic</span><span class="range-value" id="batch-stat-label">Edge count</span></span>
+                <select id="batch-statistic">
+                  <option value="edgeCount">Edge count</option>
+                  <option value="density">Density</option>
+                  <option value="components">Components</option>
+                  <option value="avgDegree">Average degree</option>
+                  <option value="avgPath">Average path</option>
+                  <option value="clustering">Clustering</option>
+                  <option value="triangles">Triangles</option>
+                </select>
+              </label>
+            </article>
+
+            <article class="compact-card log-card">
+              <p class="panel-label">Comparison</p>
+              <ul class="distance-list" id="pair-summary">
+                <li>Loading comparison.</li>
+              </ul>
             </article>
           </aside>
         </div>
-      </section>
 
-      <section class="stat-grid">
-        <article class="stat-card">
-          <div class="metric-label">Nodes</div>
-          <div class="metric-value" id="stat-node-count">--</div>
-          <div class="metric-note">current graph order</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Edges</div>
-          <div class="metric-value" id="stat-edge-count">--</div>
-          <div class="metric-note">undirected links</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Components</div>
-          <div class="metric-value" id="stat-components">--</div>
-          <div class="metric-note">connected pieces</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Avg Path</div>
-          <div class="metric-value" id="stat-average-path">--</div>
-          <div class="metric-note">reachable pairs only</div>
-        </article>
-      </section>
-
-      <section class="workbench-grid">
-        <article class="surface-panel">
-          <div class="panel-head">
-            <span>Workbench</span>
-            <span id="surface-caption">click nodes to reset source and target</span>
-          </div>
-          <div class="graph-stage">
-            <svg id="graph-lab-canvas" viewBox="0 0 960 620" aria-label="Graph Lab canvas"></svg>
-          </div>
-        </article>
-
-        <aside class="side-panel">
-          <article class="control-card">
-            <p class="panel-label">Generator</p>
-            <h2>Graph controls</h2>
-            <p>Switch graph families, tune the size and density, then compare two selected nodes.</p>
-
-            <label>
-              <span class="select-line"><span>Graph family</span><span class="range-value" id="graph-model-label">Erdos-Renyi</span></span>
-              <select id="graph-model">
-                <option value="er">Erdos-Renyi</option>
-                <option value="sbm">Stochastic block model</option>
-                <option value="lattice">Ring lattice</option>
-              </select>
-            </label>
-
-            <label>
-              <span class="range-line"><span>Nodes</span><span class="range-value" id="node-count-value">14</span></span>
-              <input id="graph-node-count" type="range" min="8" max="22" step="1" value="14" />
-            </label>
-
-            <label>
-              <span class="range-line"><span>Density</span><span class="range-value" id="density-value">28%</span></span>
-              <input id="graph-density" type="range" min="12" max="60" step="1" value="28" />
-            </label>
-
-            <label>
-              <span class="select-line"><span>Source node</span><span class="range-value" id="source-label">A01</span></span>
-              <select id="graph-source"></select>
-            </label>
-
-            <label>
-              <span class="select-line"><span>Target node</span><span class="range-value" id="target-label">A02</span></span>
-              <select id="graph-target"></select>
-            </label>
-
-            <div class="button-row">
-              <button class="module-button primary" id="graph-regenerate" type="button">Regenerate</button>
-              <button class="module-button" id="graph-shuffle-pair" type="button">Shuffle Pair</button>
-            </div>
-          </article>
-
-          <article class="log-card">
-            <p class="panel-label">Distance Diagnostics</p>
-            <h2 id="distance-title">A01 to A02</h2>
-            <ul class="distance-list">
-              <li id="distance-shortest">Shortest path: --</li>
-              <li id="distance-degree-gap">Degree difference: --</li>
-              <li id="distance-common-neighbors">Common neighbors: --</li>
-              <li id="distance-membership">Community relation: --</li>
-            </ul>
+        <div class="graphlab-bottom-strip">
+          <article class="graphlab-bottom-card">
+            <p class="panel-label">Batch Distribution</p>
             <div class="status-line">
-              <span class="status-chip" id="path-chip">Path unresolved</span>
-              <span class="status-chip" id="density-chip">Density --</span>
+              <span class="status-chip" id="batch-stat-chip">Edge count</span>
+              <span class="status-chip" id="batch-count-chip">80 samples</span>
+            </div>
+            <div class="distribution-stage">
+              <svg id="distribution-canvas" viewBox="0 0 960 260" aria-label="Batch distribution chart"></svg>
             </div>
           </article>
 
-          <article class="log-card">
-            <p class="panel-label">Notes</p>
-            <h2>Why this module</h2>
-            <ul class="summary-list">
-              <li>Graph-valued data does not admit a single universal Euclidean summary.</li>
-              <li>Choice of inference depends on the geometry, size, sparsity, and labeling regime of the graph space.</li>
-              <li>This prototype foregrounds path-based and neighborhood-based structure as an entry point for richer graph distances.</li>
+          <article class="graphlab-bottom-card log-card">
+            <p class="panel-label">Batch Summary</p>
+            <ul class="summary-list" id="batch-summary">
+              <li>Loading batch summary.</li>
             </ul>
           </article>
-        </aside>
+        </div>
       </section>
-
-      <p class="footer-note">
-        Next layer: graph-space summaries, distance matrices, and comparative experiments across generators.
-      </p>
     </main>
   </div>
 

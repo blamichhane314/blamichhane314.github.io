@@ -321,6 +321,108 @@ a {
   border-left: 1px solid var(--line);
 }
 
+.graphlab-panel {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
+    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
+  background-size: auto, 26px 26px, 26px 26px;
+}
+
+.graphlab-panel .panel-head {
+  padding: 12px 16px;
+}
+
+.graphlab-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: stretch;
+}
+
+.graphlab-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  border-right: 1px solid var(--line);
+}
+
+.graphlab-graph-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+}
+
+.graphlab-graph-card + .graphlab-graph-card {
+  border-left: 1px solid var(--line);
+}
+
+.graphlab-graph-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mini-graph-stage {
+  min-height: 520px;
+  background:
+    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
+    linear-gradient(rgba(42, 44, 56, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.04) 1px, transparent 1px),
+    rgba(255, 255, 255, 0.4);
+  background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px, auto;
+}
+
+.mini-graph-stage svg {
+  display: block;
+  width: 100%;
+  min-height: 520px;
+}
+
+.graphlab-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 252, 247, 0.34);
+}
+
+.graphlab-bottom-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.graphlab-bottom-card {
+  padding: 16px;
+}
+
+.graphlab-bottom-card + .graphlab-bottom-card {
+  border-left: 1px solid var(--line);
+}
+
+.distribution-stage {
+  min-height: 260px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.distribution-stage svg {
+  display: block;
+  width: 100%;
+  min-height: 260px;
+}
+
 .compact-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -711,6 +813,23 @@ a {
     border-top: 1px solid var(--line);
   }
 
+  .graphlab-frame,
+  .graphlab-compare-grid,
+  .graphlab-bottom-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .graphlab-compare-grid {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .graphlab-graph-card + .graphlab-graph-card,
+  .graphlab-bottom-card + .graphlab-bottom-card {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
   .side-panel {
     grid-template-columns: 1fr;
   }
@@ -727,7 +846,9 @@ a {
   }
 
   .graph-stage,
-  .graph-stage svg {
+  .graph-stage svg,
+  .mini-graph-stage,
+  .mini-graph-stage svg {
     min-height: 420px;
   }
 }
