@@ -434,7 +434,7 @@
 
   function updatePromptPanel() {
     const prompt = state.data.prompts[state.promptKey];
-    promptMeta.textContent = `Prompt file: ${prompt.fileName} · order: ${prompt.label.toLowerCase()}`;
+    promptMeta.textContent = `${prompt.fileName} · ${prompt.label.toLowerCase()}`;
     promptText.textContent = prompt.text;
   }
 
@@ -593,10 +593,9 @@
       skipped.malformed + skipped.selfLoops + skipped.invalidIds + skipped.duplicates;
 
     runSummary.innerHTML = [
-      `<li>${counts.correct} correct emitted edges currently recover ${coverage.toFixed(1)}% of the ground-truth graph.</li>`,
-      `<li>${counts.hallucinated} emitted edges are hallucinated, giving ${precision.toFixed(1)}% precision among valid emitted edges so far.</li>`,
-      `<li>${skippedTotal} raw outputs were skipped during sanitization (${skipped.invalidIds} invalid IDs, ${skipped.duplicates} duplicates, ${skipped.malformed} malformed, ${skipped.selfLoops} self-loops).</li>`,
-      `<li>The node layout follows the ${PROMPTS[state.promptKey].label.toLowerCase()} prompt order on a fixed circular ring, while the edge sequence follows the model's raw emitted output after sanitization.</li>`,
+      `<li>Correct: ${counts.correct} · coverage ${coverage.toFixed(1)}%</li>`,
+      `<li>Hallucinated: ${counts.hallucinated} · precision ${precision.toFixed(1)}%</li>`,
+      `<li>Skipped: ${skippedTotal} · invalid ${skipped.invalidIds} · dup ${skipped.duplicates} · malformed ${skipped.malformed} · loops ${skipped.selfLoops}</li>`,
     ].join("");
   }
 

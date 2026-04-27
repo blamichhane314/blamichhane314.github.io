@@ -14,164 +14,118 @@
     <header class="module-toolbar">
       <a class="toolbar-link" href="./index.html">Back to Home</a>
       <div class="toolbar-center">
-        <span class="toolbar-title">LLM Sequence Viewer</span>
-        <span class="toolbar-subtitle">Game of Thrones / Ground Truth Comparison / Sequential Edges</span>
+        <span class="toolbar-title">LLM Sequence</span>
+        <span class="toolbar-subtitle">Game of Thrones / Sequential Edges</span>
       </div>
       <a class="toolbar-chip" href="./research.html">Research Page</a>
     </header>
 
     <main class="module-main">
-      <section class="panel hero-panel">
+      <section class="surface-panel llm-panel">
         <div class="panel-head">
-          <span>Module 02</span>
-          <span>Generative Models</span>
+          <span>Sequence Viewer</span>
+          <span id="sequence-caption">loading run data</span>
         </div>
 
-        <div class="hero-grid">
-          <div class="hero-copy">
-            <p class="eyebrow">Sequential graph generation</p>
-            <h1>Watch a model emit edges against a fixed ground-truth graph.</h1>
-            <p>
-              This viewer uses actual Game of Thrones Season 1 LLM outputs. Ground-truth edges sit
-              underneath in soft grey; emitted edges are highlighted as correct or hallucinated as
-              the sequence unfolds.
-            </p>
+        <div class="llm-frame">
+          <div class="graph-stage">
+            <svg id="sequence-canvas" viewBox="0 0 960 620" aria-label="Sequential graph generation canvas"></svg>
           </div>
 
-          <aside class="hero-meta">
-            <article class="meta-card">
-              <p class="panel-label">Current Scope</p>
-              <h2>Run-by-run playback</h2>
-              <p>Switch prompt order and model run, then compare the emitted sequence to the fixed reference graph.</p>
+          <aside class="llm-sidebar">
+            <section class="compact-stats">
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Model</div>
+                <div class="metric-value" id="seq-model-stat">--</div>
+              </article>
+
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Run</div>
+                <div class="metric-value" id="seq-run-stat">--</div>
+              </article>
+
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Prompt</div>
+                <div class="metric-value" id="seq-prompt-stat">--</div>
+              </article>
+
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Step</div>
+                <div class="metric-value" id="seq-step-stat">--</div>
+              </article>
+
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Correct</div>
+                <div class="metric-value" id="seq-correct-stat">--</div>
+              </article>
+
+              <article class="stat-card compact-stat">
+                <div class="metric-label">Hallucinated</div>
+                <div class="metric-value" id="seq-hallucinated-stat">--</div>
+              </article>
+            </section>
+
+            <article class="compact-card control-card">
+              <p class="panel-label">Controls</p>
+
+              <label>
+                <span class="select-line"><span>Prompt order</span><span class="range-value" id="prompt-order-label">Default</span></span>
+                <select id="prompt-order">
+                  <option value="default">Default</option>
+                  <option value="reverse">Reverse</option>
+                </select>
+              </label>
+
+              <div class="model-filter-block">
+                <div class="select-line"><span>Model</span><span class="range-value" id="model-label">--</span></div>
+                <div class="model-chip-row" id="sequence-model-tabs"></div>
+              </div>
+
+              <label>
+                <span class="select-line"><span>Run</span><span class="range-value" id="run-label">--</span></span>
+                <select id="sequence-run"></select>
+              </label>
+
+              <label>
+                <span class="range-line"><span>Speed</span><span class="range-value" id="sequence-speed-value">0.75 s</span></span>
+                <input id="sequence-speed" type="range" min="250" max="1400" step="50" value="750" />
+              </label>
+
+              <details class="prompt-details">
+                <summary>Prompt</summary>
+                <div class="prompt-meta" id="prompt-meta">Prompt file: --</div>
+                <pre class="prompt-text" id="prompt-text"></pre>
+              </details>
+
+              <div class="button-row">
+                <button class="module-button primary" id="sequence-play-toggle" type="button">Pause</button>
+                <button class="module-button" id="sequence-step" type="button">Step</button>
+                <button class="module-button" id="sequence-reset" type="button">Reset</button>
+              </div>
             </article>
 
-            <article class="meta-card">
-              <p class="panel-label">Color Logic</p>
-              <h2>Grey, green, red</h2>
-              <p>Grey shows the base graph, green marks emitted edges that exist in ground truth, and red marks hallucinated edges.</p>
+            <article class="compact-card log-card">
+              <p class="panel-label" id="sequence-status-title">Current emission</p>
+              <div class="status-line">
+                <span class="status-chip" id="sequence-status-chip">Running</span>
+                <span class="status-chip" id="sequence-length-chip">0 of 0</span>
+                <span class="status-chip" id="sequence-quality-chip">--</span>
+              </div>
+              <ol class="sequence-log" id="sequence-log"></ol>
+            </article>
+
+            <article class="compact-card log-card">
+              <p class="panel-label">Overlay</p>
+              <div class="legend-list">
+                <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth</span></div>
+                <div class="legend-item"><span class="legend-swatch correct"></span><span>correct</span></div>
+                <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated</span></div>
+              </div>
+              <ul class="summary-list dynamic-list" id="run-summary"></ul>
             </article>
           </aside>
         </div>
       </section>
-
-      <section class="stat-grid">
-        <article class="stat-card">
-          <div class="metric-label">Model</div>
-          <div class="metric-value" id="seq-model-stat">--</div>
-          <div class="metric-note">selected model family</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Run</div>
-          <div class="metric-value" id="seq-run-stat">--</div>
-          <div class="metric-note">selected replication</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Prompt</div>
-          <div class="metric-value" id="seq-prompt-stat">--</div>
-          <div class="metric-note">node-order condition</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Step</div>
-          <div class="metric-value" id="seq-step-stat">--</div>
-          <div class="metric-note">current emission index</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Correct</div>
-          <div class="metric-value" id="seq-correct-stat">--</div>
-          <div class="metric-note">matches in ground truth</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="metric-label">Hallucinated</div>
-          <div class="metric-value" id="seq-hallucinated-stat">--</div>
-          <div class="metric-note">emitted outside ground truth</div>
-        </article>
-      </section>
-
-      <section class="workbench-grid">
-        <article class="surface-panel">
-          <div class="panel-head">
-            <span>Playback Surface</span>
-            <span id="sequence-caption">loading run data</span>
-          </div>
-          <div class="graph-stage">
-            <svg id="sequence-canvas" viewBox="0 0 960 620" aria-label="Sequential graph generation canvas"></svg>
-          </div>
-        </article>
-
-        <aside class="side-panel sequence-side-panel">
-          <article class="control-card">
-            <p class="panel-label">Run Controls</p>
-            <h2>Select prompt order, model, run, and playback speed</h2>
-            <p>Prompt text can stay collapsed until needed.</p>
-
-            <label>
-              <span class="select-line"><span>Prompt order</span><span class="range-value" id="prompt-order-label">Default</span></span>
-              <select id="prompt-order">
-                <option value="default">Default</option>
-                <option value="reverse">Reverse</option>
-              </select>
-            </label>
-
-            <div class="model-filter-block">
-              <div class="select-line"><span>Model</span><span class="range-value" id="model-label">--</span></div>
-              <div class="model-chip-row" id="sequence-model-tabs"></div>
-            </div>
-
-            <label>
-              <span class="select-line"><span>Run</span><span class="range-value" id="run-label">--</span></span>
-              <select id="sequence-run"></select>
-            </label>
-
-            <label>
-              <span class="range-line"><span>Speed</span><span class="range-value" id="sequence-speed-value">0.75 s</span></span>
-              <input id="sequence-speed" type="range" min="250" max="1400" step="50" value="750" />
-            </label>
-
-            <details class="prompt-details">
-              <summary>Show prompt</summary>
-              <div class="prompt-meta" id="prompt-meta">Prompt file: --</div>
-              <pre class="prompt-text" id="prompt-text"></pre>
-            </details>
-
-            <div class="button-row">
-              <button class="module-button primary" id="sequence-play-toggle" type="button">Pause</button>
-              <button class="module-button" id="sequence-step" type="button">Step</button>
-              <button class="module-button" id="sequence-reset" type="button">Reset</button>
-            </div>
-          </article>
-
-          <article class="log-card">
-            <p class="panel-label">Sequence Log</p>
-            <h2 id="sequence-status-title">Current emission</h2>
-            <div class="status-line">
-              <span class="status-chip" id="sequence-status-chip">Running</span>
-              <span class="status-chip" id="sequence-length-chip">0 of 0</span>
-              <span class="status-chip" id="sequence-quality-chip">--</span>
-            </div>
-            <ol class="sequence-log" id="sequence-log"></ol>
-          </article>
-
-          <article class="log-card">
-            <p class="panel-label">Comparison</p>
-            <h2>Ground truth overlay</h2>
-            <div class="legend-list">
-              <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth base graph</span></div>
-              <div class="legend-item"><span class="legend-swatch correct"></span><span>correct emitted edge</span></div>
-              <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated emitted edge</span></div>
-            </div>
-            <ul class="summary-list dynamic-list" id="run-summary"></ul>
-          </article>
-        </aside>
-      </section>
-
-      <p class="footer-note">
-        This module uses actual LLM outputs, prompt files, node-order metadata, and a fixed ground-truth graph for comparison.
-      </p>
     </main>
   </div>
 

@@ -255,6 +255,25 @@ a {
   overflow: hidden;
 }
 
+.llm-panel {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
+    linear-gradient(rgba(42, 44, 56, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42, 44, 56, 0.024) 1px, transparent 1px);
+  background-size: auto, 26px 26px, 26px 26px;
+}
+
+.llm-panel .panel-head {
+  padding: 12px 16px;
+}
+
+.llm-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: stretch;
+}
+
 .graph-stage {
   position: relative;
   min-height: 680px;
@@ -271,6 +290,45 @@ a {
   display: block;
   width: 100%;
   min-height: 680px;
+}
+
+.llm-frame .graph-stage {
+  border-right: 1px solid var(--line);
+}
+
+.llm-sidebar {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 252, 247, 0.34);
+}
+
+.compact-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.compact-stat {
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.compact-stat .metric-value {
+  margin-top: 6px;
+  font-size: 0.98rem;
+}
+
+.compact-card {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.compact-card .panel-label {
+  margin: 0 0 10px;
 }
 
 .side-panel {
@@ -429,7 +487,7 @@ a {
   list-style: none;
   padding-left: 0;
   margin-top: 12px;
-  max-height: 280px;
+  max-height: 260px;
   overflow: auto;
 }
 
@@ -497,8 +555,8 @@ a {
 
 .legend-list {
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .legend-item {
@@ -616,6 +674,15 @@ a {
   .hero-panel .hero-grid,
   .stat-grid {
     grid-template-columns: 1fr;
+  }
+
+  .llm-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .llm-frame .graph-stage {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 
   .side-panel {
