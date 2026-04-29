@@ -98,14 +98,6 @@ a {
   letter-spacing: 0.02em;
 }
 
-.brand-tag {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .site-nav {
   display: flex;
   justify-content: center;
