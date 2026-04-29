@@ -30,6 +30,43 @@ function useFarm() {
   return { size, ref, farmRef };
 }
 
+function resolveInteractionMode(mode) {
+  return mode === 'pilot' || mode === 'hybrid' ? mode : 'draw';
+}
+
+function isEditableTarget(target) {
+  return target instanceof Element &&
+    !!target.closest('input, select, textarea, button, [contenteditable="true"]');
+}
+
+function pickAgentAtPoint(farm, x, y, view, netState) {
+  if (!farm) return null;
+  let bestId = null;
+  let bestDist = Infinity;
+  if (view === 'network') {
+    const positions = netState?.positions || {};
+    for (const a of farm.agents) {
+      const p = positions[a.id];
+      if (!p) continue;
+      const d = Math.hypot(x - p.x, y - p.y);
+      if (d < 20 && d < bestDist) {
+        bestId = a.id;
+        bestDist = d;
+      }
+    }
+    return bestId;
+  }
+  for (const a of farm.agents) {
+    const ay = a.y + Math.sin(a.bob) * 0.6;
+    const d = Math.hypot(x - a.x, y - ay);
+    if (d < 16 && d < bestDist) {
+      bestId = a.id;
+      bestDist = d;
+    }
+  }
+  return bestId;
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const theme = THEMES[t.theme] || THEMES.paper;
@@ -41,19 +78,107 @@ function App() {
   const stepOnceRef = React.useRef(false);
   const netStateRef = React.useRef({ positions: {} });
   const drawingRef = React.useRef(null);
-  const [drawEnabled, setDrawEnabled] = React.useState(
-    window.__agentFarmHostState?.drawEnabled ?? true
+  const [interactionMode, setInteractionMode] = React.useState(
+    resolveInteractionMode(window.__agentFarmHostState?.interactionMode)
   );
+  const [selectedAgentId, setSelectedAgentId] = React.useState(null);
+  const pilotInputRef = React.useRef({
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    boost: false,
+    brake: false,
+  });
+  const canDraw = interactionMode === 'draw' || interactionMode === 'hybrid';
+  const canPilot = interactionMode === 'pilot' || interactionMode === 'hybrid';
 
   React.useEffect(() => {
-    const syncDrawEnabled = (event) => {
-      const next = event?.detail?.drawEnabled ?? window.__agentFarmHostState?.drawEnabled ?? true;
-      setDrawEnabled(next);
-      if (!next) drawingRef.current = null;
+    const syncInteractionState = (event) => {
+      const detail = event?.detail || window.__agentFarmHostState || {};
+      const nextMode = resolveInteractionMode(detail.interactionMode);
+      setInteractionMode(nextMode);
+      if (nextMode === 'pilot') drawingRef.current = null;
     };
-    window.addEventListener('agent-farm-draw-change', syncDrawEnabled);
-    return () => window.removeEventListener('agent-farm-draw-change', syncDrawEnabled);
+    window.addEventListener('agent-farm-draw-change', syncInteractionState);
+    window.addEventListener('agent-farm-interaction-mode-change', syncInteractionState);
+    return () => {
+      window.removeEventListener('agent-farm-draw-change', syncInteractionState);
+      window.removeEventListener('agent-farm-interaction-mode-change', syncInteractionState);
+    };
   }, []);
+
+  React.useEffect(() => {
+    if (selectedAgentId == null) return;
+    if (!farmRef.current?.agents[selectedAgentId]) setSelectedAgentId(null);
+  }, [selectedAgentId, t.count, size.w, size.h]);
+
+  React.useEffect(() => {
+    if (canPilot) return;
+    pilotInputRef.current = {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      boost: false,
+      brake: false,
+    };
+    setSelectedAgentId(null);
+  }, [canPilot]);
+
+  React.useEffect(() => {
+    const setKey = (event, next) => {
+      if (isEditableTarget(event.target)) return false;
+      if (!canPilot && event.key !== 'Escape') return false;
+      switch (event.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          pilotInputRef.current.up = next;
+          return true;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          pilotInputRef.current.down = next;
+          return true;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          pilotInputRef.current.left = next;
+          return true;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          pilotInputRef.current.right = next;
+          return true;
+        case 'Shift':
+          pilotInputRef.current.boost = next;
+          return true;
+        case ' ':
+        case 'Spacebar':
+        case 'Space':
+          pilotInputRef.current.brake = next;
+          return true;
+        case 'Escape':
+          if (next) setSelectedAgentId(null);
+          return true;
+        default:
+          return false;
+      }
+    };
+    const onKeyDown = (event) => {
+      if (setKey(event, true)) event.preventDefault();
+    };
+    const onKeyUp = (event) => {
+      if (setKey(event, false)) event.preventDefault();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [canPilot]);
 
   React.useEffect(() => {
     if (!size.w || !size.h) return;
@@ -80,13 +205,20 @@ function App() {
       const farm = farmRef.current, canvas = canvasRef.current;
       if (farm && canvas) {
         if (!t.paused || stepOnceRef.current) {
-          farm.step(dt, { speed: t.speed, interactionFreq: t.interactionFreq });
+          farm.step(dt, {
+            speed: t.speed,
+            interactionFreq: t.interactionFreq,
+            pilot: canPilot && selectedAgentId != null
+              ? { agentId: selectedAgentId, input: pilotInputRef.current }
+              : null,
+          });
           stepOnceRef.current = false;
         }
         drawFarm(canvas, farm, {
           style: t.style, theme, view: t.view,
           netState: netStateRef.current,
           pendingObstacle: drawingRef.current,
+          selectedAgentId,
         }, now / 1000);
         if (now - lastSampleRef.current > 250) {
           lastSampleRef.current = now;
@@ -101,7 +233,7 @@ function App() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [t.paused, t.speed, t.interactionFreq, t.style, t.theme, t.view]);
+  }, [t.paused, t.speed, t.interactionFreq, t.style, t.theme, t.view, canPilot, selectedAgentId]);
 
   const stats = farmRef.current ? farmRef.current.stats() : null;
   const canvasInset = 22;
@@ -120,11 +252,24 @@ function App() {
       <canvas
         ref={canvasRef}
         onMouseDown={(e) => {
-          if (t.view !== 'farm' || !drawEnabled) return;
           const rect = e.currentTarget.getBoundingClientRect();
-          drawingRef.current = {
-            points: [[e.clientX - rect.left, e.clientY - rect.top]],
-          };
+          const px = e.clientX - rect.left;
+          const py = e.clientY - rect.top;
+          if (canPilot) {
+            const pickedId = pickAgentAtPoint(farmRef.current, px, py, t.view, netStateRef.current);
+            if (pickedId != null) {
+              setSelectedAgentId(pickedId);
+              force();
+              return;
+            }
+            if (!canDraw) {
+              setSelectedAgentId(null);
+              force();
+              return;
+            }
+          }
+          if (t.view !== 'farm' || !canDraw) return;
+          drawingRef.current = { points: [[px, py]] };
           force();
         }}
         onMouseMove={(e) => {
@@ -158,7 +303,11 @@ function App() {
           width: `calc(100% - ${canvasInset * 2}px)`,
           height: `calc(100% - ${canvasInset * 2}px)`,
           display: 'block',
-          cursor: t.view === 'farm' && drawEnabled ? 'crosshair' : 'default',
+          cursor:
+            canDraw && canPilot ? 'cell' :
+            canDraw && t.view === 'farm' ? 'crosshair' :
+            canPilot ? 'pointer' :
+            'default',
         }}
       />
       <Chrome style={t.style} title={title} theme={theme} />
@@ -217,6 +366,15 @@ function App() {
         <TweakToggle label="Paused" value={t.paused} onChange={v => setTweak('paused', v)} />
         <TweakButton label="Step once" onClick={() => { stepOnceRef.current = true; }} />
         <TweakButton label="Clear obstacles" onClick={() => { if (farmRef.current) farmRef.current.obstacles = []; }} />
+        <TweakSection label="Pilot" />
+        <div style={{
+          fontSize: 9,
+          lineHeight: 1.6,
+          color: 'rgba(41,38,27,.62)',
+          paddingBottom: 2,
+        }}>
+          Click an agent to select it. Use WASD or arrows to steer, hold Shift to boost, press Space to brake, and Esc to clear the selection.
+        </div>
         <TweakSection label="Style" />
         <TweakRadio label="Variant" value={t.style}
           options={['blueprint', 'vector', 'crt']}

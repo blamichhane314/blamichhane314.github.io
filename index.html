@@ -62,11 +62,33 @@
   .toolbar-btn {
     opacity: 0.82;
   }
+  .toolbar-segmented {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid rgba(42, 44, 56, 0.16);
+    background: rgba(255, 252, 247, 0.82);
+  }
+  .toolbar-segmented .toolbar-btn {
+    min-height: 40px;
+    border: 0;
+    border-right: 1px solid rgba(42, 44, 56, 0.12);
+    background: transparent;
+  }
+  .toolbar-segmented .toolbar-btn:last-child {
+    border-right: 0;
+  }
   .toolbar-btn:hover,
   .toolbar-toggle:hover {
     opacity: 1;
     border-color: rgba(42, 44, 56, 0.28);
     background: rgba(255, 255, 255, 0.94);
+  }
+  .toolbar-segmented:hover {
+    border-color: rgba(42, 44, 56, 0.28);
+    background: rgba(255, 255, 255, 0.94);
+  }
+  .toolbar-segmented .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.7);
   }
   .toolbar-btn.is-on {
     opacity: 1;
@@ -170,6 +192,10 @@
     .toolbar-group.divided {
       padding-left: 10px;
     }
+    .toolbar-segmented .toolbar-btn {
+      min-height: 36px;
+      padding: 0 10px;
+    }
     .toolbar-label-hide {
       display: none;
     }
@@ -197,14 +223,17 @@
     </button>
 
     <div class="toolbar-group divided">
-      <button class="toolbar-btn is-on" id="toolbar-draw" type="button" aria-pressed="true" title="Toggle obstacle drawing in Farm view.">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="m11.9 2.9 1.2 1.2"/>
-          <path d="m5.1 11.8 7-7a1.4 1.4 0 1 0-2-2l-7 7-.7 2.5 2.7-.5Z"/>
-          <path d="M2.5 14.2h11"/>
-        </svg>
-        <span class="toolbar-label-hide">Draw</span>
-      </button>
+      <div class="toolbar-segmented" role="group" aria-label="Interaction mode">
+        <button class="toolbar-btn is-on" id="toolbar-mode-draw" type="button" aria-pressed="true" title="Draw obstacles in Farm view.">
+          <span>Draw</span>
+        </button>
+        <button class="toolbar-btn" id="toolbar-mode-pilot" type="button" aria-pressed="false" title="Select an agent and guide it with the keyboard.">
+          <span>Pilot</span>
+        </button>
+        <button class="toolbar-btn" id="toolbar-mode-hybrid" type="button" aria-pressed="false" title="Use pilot selection and drawing together.">
+          <span>Pilot + Draw</span>
+        </button>
+      </div>
       <span class="toolbar-zoom">100%</span>
     </div>
   </div>
@@ -232,8 +261,16 @@
   (() => {
     const tweaksButton = document.getElementById('toolbar-tweaks');
     const refreshButton = document.getElementById('toolbar-refresh');
-    const drawButton = document.getElementById('toolbar-draw');
-    window.__agentFarmHostState = { drawEnabled: true };
+    const modeButtons = {
+      draw: document.getElementById('toolbar-mode-draw'),
+      pilot: document.getElementById('toolbar-mode-pilot'),
+      hybrid: document.getElementById('toolbar-mode-hybrid'),
+    };
+    window.__agentFarmHostState = {
+      interactionMode: 'draw',
+      drawEnabled: true,
+      pilotEnabled: false,
+    };
     let tweaksOpen = false;
 
     const syncTweaks = (open) => {
@@ -242,12 +279,23 @@
       tweaksButton.setAttribute('aria-pressed', open ? 'true' : 'false');
     };
 
-    const syncDraw = (enabled) => {
-      window.__agentFarmHostState.drawEnabled = enabled;
-      drawButton.classList.toggle('is-on', enabled);
-      drawButton.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    const syncInteractionMode = (mode) => {
+      const interactionMode = mode === 'pilot' || mode === 'hybrid' ? mode : 'draw';
+      const drawEnabled = interactionMode === 'draw' || interactionMode === 'hybrid';
+      const pilotEnabled = interactionMode === 'pilot' || interactionMode === 'hybrid';
+      window.__agentFarmHostState.interactionMode = interactionMode;
+      window.__agentFarmHostState.drawEnabled = drawEnabled;
+      window.__agentFarmHostState.pilotEnabled = pilotEnabled;
+      for (const [key, button] of Object.entries(modeButtons)) {
+        const active = key === interactionMode;
+        button.classList.toggle('is-on', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      }
       window.dispatchEvent(new CustomEvent('agent-farm-draw-change', {
-        detail: { drawEnabled: enabled }
+        detail: { drawEnabled, interactionMode, pilotEnabled }
+      }));
+      window.dispatchEvent(new CustomEvent('agent-farm-interaction-mode-change', {
+        detail: { drawEnabled, interactionMode, pilotEnabled }
       }));
     };
 
@@ -262,9 +310,9 @@
       window.location.reload();
     });
 
-    drawButton.addEventListener('click', () => {
-      syncDraw(!window.__agentFarmHostState.drawEnabled);
-    });
+    modeButtons.draw.addEventListener('click', () => syncInteractionMode('draw'));
+    modeButtons.pilot.addEventListener('click', () => syncInteractionMode('pilot'));
+    modeButtons.hybrid.addEventListener('click', () => syncInteractionMode('hybrid'));
 
     window.addEventListener('message', (event) => {
       const type = event?.data?.type;
@@ -276,7 +324,7 @@
       }
     });
 
-    syncDraw(true);
+    syncInteractionMode('draw');
   })();
 </script>
 </body>

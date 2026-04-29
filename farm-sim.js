@@ -105,6 +105,14 @@ const RESOURCE_KEYS = Object.keys(RESOURCES);
 
 function rnd(a, b) { return a + Math.random() * (b - a); }
 function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
+function pilotVector(input) {
+  if (!input) return null;
+  const x = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+  const y = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+  if (!x && !y) return null;
+  const len = Math.hypot(x, y) || 1;
+  return { x: x / len, y: y / len };
+}
 
 function makeAgent(i, w, h) {
   const spriteKey = pick(SPRITE_KEYS);
@@ -182,10 +190,17 @@ class Farm {
   }
 
   step(dt, opts) {
-    const { speed, interactionFreq } = opts;
+    const { speed, interactionFreq, pilot } = opts;
     this.tick += dt;
     const W = this.w, H = this.h;
     const agents = this.agents;
+    const exchangeAgents = new Set();
+    for (const trade of this.trades) {
+      if (trade.phase === 'exchange') {
+        exchangeAgents.add(trade.a);
+        exchangeAgents.add(trade.b);
+      }
+    }
 
     // Update wander
     for (const a of agents) {
@@ -208,6 +223,23 @@ class Farm {
           const d = Math.hypot(dx, dy) || 1;
           a.vx = (dx / d) * 0.6;
           a.vy = (dy / d) * 0.6;
+        }
+      }
+
+      if (pilot?.agentId === a.id && !exchangeAgents.has(a.id)) {
+        const move = pilotVector(pilot.input);
+        if (move) {
+          const manualGain = pilot.input?.boost ? 2.9 : 1.9;
+          a.vx = move.x * manualGain;
+          a.vy = move.y * manualGain;
+          a.targetVx = a.vx;
+          a.targetVy = a.vy;
+        } else if (pilot.input?.brake) {
+          const hold = Math.max(0, 1 - dt * 8);
+          a.vx *= hold;
+          a.vy *= hold;
+          a.targetVx = 0;
+          a.targetVy = 0;
         }
       }
 
@@ -288,9 +320,17 @@ class Farm {
       const dx = b.x - a.x, dy = b.y - a.y;
       const d = Math.hypot(dx, dy);
       if (t.phase === 'approach') {
-        if (d < 22 || t.t > 3) {
+        if (d < 22) {
           t.phase = 'exchange';
           t.t = 0;
+        } else if (t.t > 3) {
+          a.engagedWith = null;
+          b.engagedWith = null;
+          a.cooldown = Math.max(a.cooldown, rnd(0.6, 1.1));
+          b.cooldown = Math.max(b.cooldown, rnd(0.6, 1.1));
+          a.targetVx = rnd(-1, 1); a.targetVy = rnd(-1, 1);
+          b.targetVx = rnd(-1, 1); b.targetVy = rnd(-1, 1);
+          continue;
         }
       } else if (t.phase === 'exchange') {
         // stay put-ish (already steering toward each other, but damp)

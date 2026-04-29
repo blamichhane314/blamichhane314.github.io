@@ -7,6 +7,91 @@ function themedInk(theme, alpha = 1) {
   return `rgba(${rgb}, ${alpha})`;
 }
 
+function pilotInk(theme, alpha = 1) {
+  const rgbByTheme = {
+    Paper: '58, 118, 92',
+    Blueprint: '255, 226, 150',
+    Terminal: '255, 230, 165',
+    Amber: '255, 236, 186',
+    'Mono Dark': '158, 214, 255',
+  };
+  const rgb = rgbByTheme[theme?.label] || '58, 118, 92';
+  return `rgba(${rgb}, ${alpha})`;
+}
+
+function buildSelectionProfile(farm, selectedAgentId) {
+  if (selectedAgentId == null) return null;
+  const selected = farm.agents[selectedAgentId];
+  if (!selected) return null;
+  const levels = new Map();
+  let maxWeight = 0;
+  for (const e of farm.edges.values()) {
+    if (e.a === selectedAgentId || e.b === selectedAgentId) {
+      const other = e.a === selectedAgentId ? e.b : e.a;
+      levels.set(other, e.weight);
+      maxWeight = Math.max(maxWeight, e.weight);
+    }
+  }
+  const normalized = new Map();
+  const denom = Math.max(1, maxWeight);
+  for (const [id, weight] of levels) normalized.set(id, weight / denom);
+  if (selected.engagedWith != null && farm.agents[selected.engagedWith]) {
+    normalized.set(selected.engagedWith, Math.max(normalized.get(selected.engagedWith) || 0, 0.35));
+  }
+  return {
+    selectedId: selectedAgentId,
+    engagedPartnerId: selected.engagedWith,
+    levels: normalized,
+  };
+}
+
+function drawPilotHalo(ctx, cx, cy, t, theme, highlight) {
+  if (!highlight || (!highlight.selected && !highlight.level && !highlight.active)) return;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 5.5);
+  const level = highlight.selected ? 1 : highlight.level || 0;
+  const haloRadius = highlight.selected
+    ? 18 + pulse * 3
+    : 10 + level * 7 + (highlight.active ? pulse * 2 : 0);
+  const haloAlpha = highlight.selected
+    ? 0.18 + pulse * 0.06
+    : 0.06 + level * 0.16 + (highlight.active ? 0.07 : 0);
+  const ringRadius = highlight.selected
+    ? 12 + pulse * 0.9
+    : 9.5 + level * 3.5;
+  ctx.save();
+  const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloRadius);
+  halo.addColorStop(0, pilotInk(theme, haloAlpha));
+  halo.addColorStop(0.45, pilotInk(theme, haloAlpha * 0.45));
+  halo.addColorStop(1, pilotInk(theme, 0));
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(cx, cy, haloRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = pilotInk(
+    theme,
+    highlight.selected ? 0.92 : Math.min(0.78, 0.22 + level * 0.5 + (highlight.active ? 0.12 : 0))
+  );
+  ctx.lineWidth = highlight.selected ? 1.8 : 1.2;
+  if (highlight.active && !highlight.selected) {
+    ctx.setLineDash([3, 3]);
+    ctx.lineDashOffset = -t * 14;
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (highlight.selected) {
+    ctx.strokeStyle = pilotInk(theme, 0.5);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, ringRadius + 4.5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawSprite(ctx, bitmap, cx, cy, px, color) {
   const size = 8;
   const off = (size * px) / 2;
@@ -94,9 +179,10 @@ function drawCrtBackdrop(ctx, w, h, t, theme) {
   ctx.restore();
 }
 
-function drawAgentBlueprint(ctx, a, px, t, theme) {
+function drawAgentBlueprint(ctx, a, px, t, theme, highlight) {
   const cx = Math.round(a.x);
   const cy = Math.round(a.y + Math.sin(a.bob) * 0.6);
+  drawPilotHalo(ctx, cx, cy, t, theme, highlight);
   if (a.engagedWith != null) {
     ctx.save();
     ctx.strokeStyle = themedInk(theme, 0.5);
@@ -128,9 +214,10 @@ function drawAgentBlueprint(ctx, a, px, t, theme) {
   drawSprite(ctx, SPRITES[a.sprite], cx, cy, px, themedInk(theme, theme?.inkA ?? 0.92));
 }
 
-function drawAgentVector(ctx, a, px, t, theme) {
+function drawAgentVector(ctx, a, px, t, theme, highlight) {
   const cx = Math.round(a.x);
   const cy = Math.round(a.y + Math.sin(a.bob) * 0.6);
+  drawPilotHalo(ctx, cx, cy, t, theme, highlight);
   ctx.save();
   ctx.strokeStyle = themedInk(theme, 0.38);
   ctx.beginPath();
@@ -153,9 +240,10 @@ function drawAgentVector(ctx, a, px, t, theme) {
   drawSprite(ctx, SPRITES[a.sprite], cx, cy, px, themedInk(theme, theme?.inkA ?? 0.95));
 }
 
-function drawAgentCrt(ctx, a, px, t, theme) {
+function drawAgentCrt(ctx, a, px, t, theme, highlight) {
   const cx = Math.round(a.x);
   const cy = Math.round(a.y + Math.sin(a.bob) * 0.6);
+  drawPilotHalo(ctx, cx, cy, t, theme, highlight);
   if (a.engagedWith != null) {
     ctx.save();
     ctx.fillStyle = themedInk(theme, 0.12);
@@ -220,7 +308,7 @@ function drawTrade(ctx, farm, trade, t, theme) {
 // Network view: force-directed layout over edges
 // ────────────────────────────────────────────────────────────
 
-function drawNetwork(ctx, farm, w, h, t, theme, style, netState) {
+function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
   // Apply tiny force sim in-place on netState.positions
   const agents = farm.agents;
   const pos = netState.positions;
@@ -302,17 +390,36 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState) {
     const hot = Math.max(0, 1 - age / 3);
     const width = 0.5 + w01 * 3.5;
     const alpha = 0.18 + w01 * 0.55 + hot * 0.2;
-    ctx.lineWidth = width;
-    ctx.strokeStyle = themedInk(theme, Math.min(0.95, alpha));
+    const selectedNeighbor =
+      selection?.selectedId === e.a ? e.b :
+      selection?.selectedId === e.b ? e.a :
+      null;
+    const relationLevel = selectedNeighbor != null ? (selection.levels.get(selectedNeighbor) || 0) : 0;
+    const activeRelation = selectedNeighbor != null && selection?.engagedPartnerId === selectedNeighbor;
+    if (selection) {
+      if (selectedNeighbor != null) {
+        const activePulse = activeRelation ? 0.08 + (0.5 + 0.5 * Math.sin(t * 6.5)) * 0.12 : 0;
+        ctx.lineWidth = 1 + relationLevel * 3.2 + hot * 0.6;
+        ctx.strokeStyle = pilotInk(theme, Math.min(0.95, 0.28 + relationLevel * 0.52 + activePulse));
+      } else {
+        ctx.lineWidth = Math.max(0.35, width * 0.58);
+        ctx.strokeStyle = themedInk(theme, Math.min(0.34, alpha * 0.42));
+      }
+    } else {
+      ctx.lineWidth = width;
+      ctx.strokeStyle = themedInk(theme, Math.min(0.95, alpha));
+    }
     ctx.beginPath();
     ctx.moveTo(pa.x, pa.y);
     ctx.lineTo(pb.x, pb.y);
     ctx.stroke();
 
     // weight label at midpoint for heavy edges
-    if (e.weight >= 2) {
+    if (e.weight >= 2 && (!selection || selectedNeighbor != null || e.weight >= Math.max(3, maxWeight * 0.55))) {
       const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-      ctx.fillStyle = themedInk(theme, 0.75);
+      ctx.fillStyle = selectedNeighbor != null
+        ? pilotInk(theme, 0.82)
+        : themedInk(theme, selection ? 0.38 : 0.75);
       ctx.font = '8.5px JetBrains Mono, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -321,25 +428,56 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState) {
   }
   ctx.restore();
 
+  if (selection?.engagedPartnerId != null) {
+    const pa = pos[selection.selectedId];
+    const pb = pos[selection.engagedPartnerId];
+    if (pa && pb) {
+      ctx.save();
+      ctx.strokeStyle = pilotInk(theme, 0.72);
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 4]);
+      ctx.lineDashOffset = -t * 18;
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
   // ─── draw nodes ───
   for (const a of agents) {
     const p = pos[a.id]; if (!p) continue;
     // degree ring sized by connections
-    let degree = 0, totalW = 0;
+    let totalW = 0;
     for (const e of edges.values()) {
-      if (e.a === a.id || e.b === a.id) { degree++; totalW += e.weight; }
+      if (e.a === a.id || e.b === a.id) totalW += e.weight;
     }
     const radius = 10 + Math.min(8, totalW * 0.5);
+    const isSelected = selection?.selectedId === a.id;
+    const relationLevel = selection ? (selection.levels.get(a.id) || 0) : 0;
+    const isActiveMate = selection?.engagedPartnerId === a.id;
+    const dimNode = selection && !isSelected && relationLevel <= 0;
     // ring
     ctx.save();
-    ctx.strokeStyle = themedInk(theme, 0.4);
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = isSelected
+      ? pilotInk(theme, 0.95)
+      : relationLevel > 0
+        ? pilotInk(theme, Math.min(0.78, 0.28 + relationLevel * 0.48 + (isActiveMate ? 0.12 : 0)))
+        : themedInk(theme, dimNode ? 0.22 : 0.4);
+    ctx.lineWidth = isSelected ? 1.8 : relationLevel > 0 ? 1.3 : 1;
     ctx.beginPath();
     ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
     ctx.stroke();
+    if (isSelected || relationLevel > 0) {
+      ctx.strokeStyle = pilotInk(theme, isSelected ? 0.48 : Math.min(0.52, 0.16 + relationLevel * 0.22));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     // active highlight
     if (a.engagedWith != null) {
-      ctx.strokeStyle = themedInk(theme, 0.7);
+      ctx.strokeStyle = isSelected || isActiveMate ? pilotInk(theme, 0.84) : themedInk(theme, 0.7);
       ctx.setLineDash([3, 3]);
       ctx.lineDashOffset = -t * 18;
       ctx.beginPath();
@@ -351,7 +489,11 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState) {
     // sprite in center
     drawSprite(ctx, SPRITES[a.sprite], p.x, p.y, 1.5, themedInk(theme, theme?.inkA ?? 0.92));
     // label
-    ctx.fillStyle = themedInk(theme, 0.55);
+    ctx.fillStyle = isSelected
+      ? pilotInk(theme, 0.9)
+      : relationLevel > 0
+        ? pilotInk(theme, Math.min(0.82, 0.3 + relationLevel * 0.42))
+        : themedInk(theme, dimNode ? 0.38 : 0.55);
     ctx.font = '8px JetBrains Mono, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(a.label, p.x, p.y + radius + 10);
@@ -490,6 +632,7 @@ function drawFarm(canvas, farm, opts, t) {
   const style = opts.style;
   const theme = opts.theme;
   const view = opts.view || 'farm';
+  const selection = buildSelectionProfile(farm, opts.selectedAgentId);
 
   if (style === 'blueprint') drawBlueprintGrid(ctx, w, h, t, theme);
   else if (style === 'vector') drawVectorGrid(ctx, w, h, t, theme);
@@ -497,7 +640,7 @@ function drawFarm(canvas, farm, opts, t) {
 
   if (view === 'network') {
     if (!opts.netState) return;
-    drawNetwork(ctx, farm, w, h, t, theme, style, opts.netState);
+    drawNetwork(ctx, farm, w, h, t, theme, style, opts.netState, selection);
     drawSparks(ctx, farm, t, theme, view, opts.netState);
     return;
   }
@@ -508,7 +651,14 @@ function drawFarm(canvas, farm, opts, t) {
     style === 'vector' ? drawAgentVector :
     style === 'crt' ? drawAgentCrt :
     drawAgentBlueprint;
-  for (const a of farm.agents) drawAgent(ctx, a, px, t, theme);
+  for (const a of farm.agents) {
+    const relationLevel = selection ? (selection.levels.get(a.id) || 0) : 0;
+    drawAgent(ctx, a, px, t, theme, selection ? {
+      selected: selection.selectedId === a.id,
+      level: relationLevel,
+      active: selection.engagedPartnerId === a.id || (selection.selectedId === a.id && a.engagedWith != null),
+    } : null);
+  }
   drawObstacles(ctx, farm, theme, t, opts.pendingObstacle);
   drawSparks(ctx, farm, t, theme, view, null);
 }
