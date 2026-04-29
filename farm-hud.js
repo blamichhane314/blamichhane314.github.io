@@ -116,12 +116,13 @@ function EventLog({ log, theme }) {
   );
 }
 
-function HUD({ stats, farm, rateHistory, theme, view, onThemeChange }) {
+function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot }) {
   if (!stats) return null;
   const edgeCount = farm ? farm.edges.size : 0;
   // density %: edges / maxPossible
   const maxE = Math.max(1, (stats.count * (stats.count - 1)) / 2);
   const density = ((edgeCount / maxE) * 100).toFixed(1);
+  const selectedAgent = pilot?.selectedAgent || null;
   return (
     <>
       <div style={{ position: 'absolute', top: 46, left: 46, display: 'flex', gap: 8 }}>
@@ -129,6 +130,14 @@ function HUD({ stats, farm, rateHistory, theme, view, onThemeChange }) {
         <StatCard theme={theme} label="Trades" value={String(stats.totalTrades).padStart(4, '0')} sub="Σ since boot" />
         <StatCard theme={theme} label="Rate" value={stats.rate.toFixed(2)} unit="t/s" sub="rolling 10s" />
         <StatCard theme={theme} label="Uptime" value={fmtTime(stats.uptime)} sub={`tick ${stats.tick.toFixed(1)}`} />
+        {selectedAgent && (
+          <StatCard
+            theme={theme}
+            label="Pilot"
+            value={selectedAgent.label}
+            sub={selectedAgent.engagedWith != null ? `linked ${farm.agents[selectedAgent.engagedWith]?.label || '--'}` : 'manual control'}
+          />
+        )}
         {view === 'network' && (
           <>
             <StatCard theme={theme} label="Edges" value={String(edgeCount).padStart(3, '0')} sub={`${density}% dense`} />

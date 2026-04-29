@@ -43,13 +43,14 @@ function pickAgentAtPoint(farm, x, y, view, netState) {
   if (!farm) return null;
   let bestId = null;
   let bestDist = Infinity;
+  const hitRadius = view === 'network' ? 24 : 22;
   if (view === 'network') {
     const positions = netState?.positions || {};
     for (const a of farm.agents) {
       const p = positions[a.id];
       if (!p) continue;
       const d = Math.hypot(x - p.x, y - p.y);
-      if (d < 20 && d < bestDist) {
+      if (d < hitRadius && d < bestDist) {
         bestId = a.id;
         bestDist = d;
       }
@@ -59,7 +60,7 @@ function pickAgentAtPoint(farm, x, y, view, netState) {
   for (const a of farm.agents) {
     const ay = a.y + Math.sin(a.bob) * 0.6;
     const d = Math.hypot(x - a.x, y - ay);
-    if (d < 16 && d < bestDist) {
+    if (d < hitRadius && d < bestDist) {
       bestId = a.id;
       bestDist = d;
     }
@@ -236,6 +237,7 @@ function App() {
   }, [t.paused, t.speed, t.interactionFreq, t.style, t.theme, t.view, canPilot, selectedAgentId]);
 
   const stats = farmRef.current ? farmRef.current.stats() : null;
+  const selectedAgent = selectedAgentId != null ? farmRef.current?.agents[selectedAgentId] || null : null;
   const canvasInset = 22;
   const hexSeed = t.view === 'network' ? 'NET' : 'FARM';
   const title = `${hexSeed}.0x${(Math.floor(stats?.uptime || 0) + 1337).toString(16).padStart(6, '0').toUpperCase().slice(-6)}`;
@@ -315,6 +317,7 @@ function App() {
         <HUD stats={stats} farm={farmRef.current}
              rateHistory={rateHistoryRef.current}
              theme={theme} view={t.view}
+             pilot={{ mode: interactionMode, selectedAgent }}
              onThemeChange={(k) => setTweak('theme', k)} />
       )}
 

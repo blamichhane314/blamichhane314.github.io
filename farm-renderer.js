@@ -211,7 +211,16 @@ function drawAgentBlueprint(ctx, a, px, t, theme, highlight) {
     ctx.stroke();
     ctx.restore();
   }
-  drawSprite(ctx, SPRITES[a.sprite], cx, cy, px, themedInk(theme, theme?.inkA ?? 0.92));
+  drawSprite(
+    ctx,
+    SPRITES[a.sprite],
+    cx,
+    cy,
+    px,
+    highlight?.selected
+      ? pilotInk(theme, 0.98)
+      : themedInk(theme, theme?.inkA ?? 0.92)
+  );
 }
 
 function drawAgentVector(ctx, a, px, t, theme, highlight) {
@@ -237,7 +246,16 @@ function drawAgentVector(ctx, a, px, t, theme, highlight) {
     ctx.stroke();
     ctx.restore();
   }
-  drawSprite(ctx, SPRITES[a.sprite], cx, cy, px, themedInk(theme, theme?.inkA ?? 0.95));
+  drawSprite(
+    ctx,
+    SPRITES[a.sprite],
+    cx,
+    cy,
+    px,
+    highlight?.selected
+      ? pilotInk(theme, 0.98)
+      : themedInk(theme, theme?.inkA ?? 0.95)
+  );
 }
 
 function drawAgentCrt(ctx, a, px, t, theme, highlight) {
@@ -251,7 +269,16 @@ function drawAgentCrt(ctx, a, px, t, theme, highlight) {
     ctx.fillRect(cx - pulse, cy - pulse, pulse * 2, pulse * 2);
     ctx.restore();
   }
-  drawSprite(ctx, SPRITES[a.sprite], cx, cy, px, themedInk(theme, theme?.inkA ?? 0.92));
+  drawSprite(
+    ctx,
+    SPRITES[a.sprite],
+    cx,
+    cy,
+    px,
+    highlight?.selected
+      ? pilotInk(theme, 0.98)
+      : themedInk(theme, theme?.inkA ?? 0.92)
+  );
   ctx.save();
   ctx.strokeStyle = themedInk(theme, 0.28);
   ctx.beginPath();
@@ -487,7 +514,14 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
     }
     ctx.restore();
     // sprite in center
-    drawSprite(ctx, SPRITES[a.sprite], p.x, p.y, 1.5, themedInk(theme, theme?.inkA ?? 0.92));
+    drawSprite(
+      ctx,
+      SPRITES[a.sprite],
+      p.x,
+      p.y,
+      1.5,
+      isSelected ? pilotInk(theme, 0.98) : themedInk(theme, theme?.inkA ?? 0.92)
+    );
     // label
     ctx.fillStyle = isSelected
       ? pilotInk(theme, 0.9)
