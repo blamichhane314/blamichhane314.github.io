@@ -300,6 +300,10 @@ h3 {
   gap: 18px;
 }
 
+.hero-position-card {
+  margin-top: 18px;
+}
+
 .signal-card {
   position: relative;
   z-index: 1;
