@@ -61,7 +61,7 @@ a {
 .site-shell,
 .page-shell {
   width: min(1220px, calc(100vw - 30px));
-  margin: 18px auto 44px;
+  margin: 18px auto 56px;
 }
 
 .site-header {
@@ -143,8 +143,8 @@ a {
 
 .site-main {
   display: grid;
-  gap: 34px;
-  margin-top: 28px;
+  gap: 48px;
+  margin-top: 32px;
 }
 
 .hero-frame,
@@ -185,8 +185,8 @@ a {
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.78fr);
-  gap: 28px;
-  padding: 24px 0;
+  gap: 40px;
+  padding: 30px 0;
 }
 
 .eyebrow,
@@ -197,7 +197,7 @@ a {
 .section-title {
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -213,20 +213,20 @@ h3 {
 
 h1 {
   margin-top: 12px;
-  font-size: clamp(2rem, 4.7vw, 3rem);
-  line-height: 1.02;
+  font-size: clamp(1.9rem, 4.1vw, 2.7rem);
+  line-height: 1.08;
   letter-spacing: -0.04em;
 }
 
 h2 {
-  font-size: clamp(1.5rem, 2.4vw, 2.05rem);
-  line-height: 1.06;
+  font-size: clamp(1.42rem, 2.2vw, 1.9rem);
+  line-height: 1.1;
   letter-spacing: -0.03em;
 }
 
 h3 {
-  font-size: 1.1rem;
-  line-height: 1.22;
+  font-size: 1.03rem;
+  line-height: 1.34;
   letter-spacing: -0.02em;
 }
 
@@ -243,20 +243,20 @@ h3 {
 .overview-card p,
 .detail-list li {
   color: var(--muted);
-  line-height: 1.8;
+  line-height: 1.9;
 }
 
 .hero-text {
   max-width: 62ch;
-  margin: 14px 0 0;
-  font-size: 1rem;
+  margin: 16px 0 0;
+  font-size: 0.98rem;
 }
 
 .hero-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .button {
@@ -297,13 +297,13 @@ h3 {
 .hero-side {
   position: relative;
   display: grid;
-  gap: 14px;
+  gap: 18px;
 }
 
 .signal-card {
   position: relative;
   z-index: 1;
-  padding: 14px 0 0;
+  padding: 18px 0 0;
   border: 0;
   border-top: 1px solid var(--line);
   background: transparent;
@@ -371,7 +371,7 @@ h3 {
 .atlas-section {
   display: grid;
   grid-template-columns: 140px 1fr;
-  gap: 28px;
+  gap: 40px;
   align-items: start;
 }
 
@@ -379,8 +379,8 @@ h3 {
   position: sticky;
   top: 96px;
   display: grid;
-  gap: 6px;
-  padding-top: 12px;
+  gap: 8px;
+  padding-top: 16px;
 }
 
 .section-index {
@@ -398,27 +398,27 @@ h3 {
 .research-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18px;
+  gap: 24px;
 }
 
 .feature-grid,
 .two-column-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 24px;
 }
 
 .three-column-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 24px;
 }
 
 .feature-card,
 .research-card,
 .list-card,
 .overview-card {
-  padding: 18px 0 0;
+  padding: 24px 0 0;
   background: transparent;
   border-top: 1px solid var(--line);
 }
@@ -427,7 +427,7 @@ h3 {
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 18px;
+  gap: 22px;
   color: inherit;
   text-decoration: none;
   transition:
@@ -471,32 +471,32 @@ h3 {
 }
 
 .feature-actions {
-  margin-top: 18px;
+  margin-top: 24px;
 }
 
 .activity-stack {
   display: grid;
-  gap: 14px;
-  margin-top: 16px;
+  gap: 18px;
+  margin-top: 20px;
 }
 
 .activity-block + .activity-block {
-  padding-top: 14px;
+  padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
 .activity-title {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   color: var(--ink);
-  font-size: 0.96rem;
+  font-size: 0.93rem;
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.58;
 }
 
 .activity-block p:last-child {
   margin: 0;
   color: var(--muted);
-  line-height: 1.72;
+  line-height: 1.84;
 }
 
 .overview-grid {
@@ -512,7 +512,7 @@ h3 {
 
 .mini-list,
 .detail-list {
-  margin: 14px 0 0;
+  margin: 18px 0 0;
   padding-left: 1.1rem;
 }
 
@@ -521,7 +521,7 @@ h3 {
 }
 
 .detail-list li + li {
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 .muted,
