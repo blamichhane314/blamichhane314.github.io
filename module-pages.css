@@ -70,6 +70,12 @@ a {
   box-shadow: none;
 }
 
+.toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .toolbar-link,
 .toolbar-chip {
   display: inline-flex;
@@ -84,6 +90,12 @@ a {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.toolbar-button {
+  appearance: none;
+  cursor: pointer;
+  font: inherit;
 }
 
 .toolbar-center {
@@ -111,6 +123,25 @@ a {
   display: grid;
   gap: 28px;
   margin-top: 24px;
+}
+
+.llm-info-panel[hidden] {
+  display: none;
+}
+
+.llm-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+  padding: 0 16px 16px;
+}
+
+.llm-info-card {
+  padding-top: 14px;
+}
+
+.llm-info-card p:last-child {
+  margin-bottom: 0;
 }
 
 .panel,
@@ -799,6 +830,11 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .llm-info-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
   .llm-frame .graph-stage {
     border-right: 0;
     border-bottom: 1px solid var(--line);
@@ -836,6 +872,10 @@ a {
 }
 
 @media (max-width: 760px) {
+  .toolbar-actions {
+    gap: 8px;
+  }
+
   .module-toolbar {
     grid-template-columns: 1fr;
     justify-items: start;

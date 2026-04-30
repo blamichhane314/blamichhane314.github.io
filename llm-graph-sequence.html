@@ -17,10 +17,49 @@
         <span class="toolbar-title">LLM Sequence</span>
         <span class="toolbar-subtitle">Game of Thrones / Sequential Edges</span>
       </div>
-      <a class="toolbar-chip" href="./research.html">Research Page</a>
+      <div class="toolbar-actions">
+        <button class="toolbar-chip toolbar-button" id="llm-info-toggle" type="button" aria-expanded="false" aria-controls="llm-info-panel">Info</button>
+        <a class="toolbar-chip" href="./research.html">Research Page</a>
+      </div>
     </header>
 
     <main class="module-main">
+      <section class="surface-panel llm-info-panel" id="llm-info-panel" hidden>
+        <div class="panel-head">
+          <span>About This Viewer</span>
+          <button class="toolbar-chip toolbar-button" id="llm-info-close" type="button">Close</button>
+        </div>
+        <div class="llm-info-grid">
+          <article class="compact-card llm-info-card">
+            <p class="panel-label">What the graph represents</p>
+            <p>
+              This viewer uses a fixed set of <strong>Game of Thrones</strong> characters as nodes and replays the edges emitted by a language model one step at a time. The ring order follows the prompt order, while the edge sequence follows the raw order produced by the selected model run.
+            </p>
+          </article>
+
+          <article class="compact-card llm-info-card">
+            <p class="panel-label">How to read the overlay</p>
+            <p>
+              Soft gray edges are the ground-truth graph. Green edges are emitted edges that match ground truth. Red edges are hallucinated edges that the model produced but that are not in the selected ground-truth network.
+            </p>
+          </article>
+
+          <article class="compact-card llm-info-card">
+            <p class="panel-label">What the controls change</p>
+            <p>
+              <strong>Prompt order</strong> switches between the default and reverse prompt variants. <strong>Model</strong> and <strong>Run</strong> choose a specific LLM output trace. <strong>Speed</strong>, <strong>Pause</strong>, <strong>Step</strong>, and <strong>Reset</strong> control the sequential playback.
+            </p>
+          </article>
+
+          <article class="compact-card llm-info-card">
+            <p class="panel-label">What this page is for</p>
+            <p>
+              The page is meant to compare how different models build the same graph over time, not just whether they end at the right answer. It highlights ordering effects, early mistakes, repeated structural patterns, and where hallucinated edges begin to accumulate.
+            </p>
+          </article>
+        </div>
+      </section>
+
       <section class="surface-panel llm-panel">
         <div class="panel-head">
           <span>Sequence Viewer</span>

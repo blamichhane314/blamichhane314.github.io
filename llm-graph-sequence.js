@@ -52,6 +52,9 @@
   };
 
   const canvas = document.getElementById("sequence-canvas");
+  const infoToggle = document.getElementById("llm-info-toggle");
+  const infoClose = document.getElementById("llm-info-close");
+  const infoPanel = document.getElementById("llm-info-panel");
   const promptOrderSelect = document.getElementById("prompt-order");
   const modelTabs = document.getElementById("sequence-model-tabs");
   const runSelect = document.getElementById("sequence-run");
@@ -80,6 +83,11 @@
   const seqStepStat = document.getElementById("seq-step-stat");
   const seqCorrectStat = document.getElementById("seq-correct-stat");
   const seqHallucinatedStat = document.getElementById("seq-hallucinated-stat");
+
+  function setInfoOpen(open) {
+    infoPanel.hidden = !open;
+    infoToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
 
   const MODEL_PATTERNS = [
     ["gpt_5.2_thinking_with_internet", "gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
@@ -767,8 +775,23 @@
     render();
   });
 
+  infoToggle.addEventListener("click", () => {
+    setInfoOpen(infoPanel.hidden);
+  });
+
+  infoClose.addEventListener("click", () => {
+    setInfoOpen(false);
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !infoPanel.hidden) {
+      setInfoOpen(false);
+    }
+  });
+
   async function init() {
     try {
+      setInfoOpen(false);
       state.data = await loadBaseData();
       promptOrderSelect.value = state.promptKey;
       populateModelTabs();
