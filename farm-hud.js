@@ -71,7 +71,7 @@ function SeriesTile({ label, value, sub, data, theme }) {
         fontSize: 8,
         opacity: 0.52,
         textTransform: 'uppercase',
-        letterSpacing: 0.08em,
+        letterSpacing: '0.08em',
       }}>
         {sub}
       </div>
@@ -145,7 +145,7 @@ function AdvancedNetworkPanel({ snapshot, history, theme }) {
         <div style={{ fontSize: 8, letterSpacing: 1.2, opacity: 0.6, textTransform: 'uppercase' }}>
           Network series
         </div>
-        <div style={{ fontSize: 8, opacity: 0.5, textTransform: 'uppercase', letterSpacing: 0.08em }}>
+        <div style={{ fontSize: 8, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           rolling overlay
         </div>
       </div>
