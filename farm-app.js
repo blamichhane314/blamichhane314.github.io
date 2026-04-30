@@ -8,7 +8,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "theme": "paper",
   "view": "farm",
   "paused": false,
-  "showHud": true
+  "showHud": true,
+  "showAdvanced": false
 }/*EDITMODE-END*/;
 
 function useFarm() {
@@ -68,6 +69,91 @@ function pickAgentAtPoint(farm, x, y, view, netState) {
   return bestId;
 }
 
+function emptyNetworkHistory() {
+  return {
+    density: [],
+    avgDegree: [],
+    clustering: [],
+    components: [],
+    largestShare: [],
+    avgWeight: [],
+  };
+}
+
+function computeNetworkSnapshot(farm) {
+  if (!farm) {
+    return {
+      edges: 0,
+      density: 0,
+      avgDegree: 0,
+      clustering: 0,
+      components: 0,
+      largestShare: 0,
+      avgWeight: 0,
+    };
+  }
+  const n = farm.agents.length;
+  const neighbors = Array.from({ length: n }, () => new Set());
+  let edgeCount = 0;
+  let totalWeight = 0;
+  for (const e of farm.edges.values()) {
+    if (!farm.agents[e.a] || !farm.agents[e.b]) continue;
+    neighbors[e.a].add(e.b);
+    neighbors[e.b].add(e.a);
+    edgeCount++;
+    totalWeight += e.weight;
+  }
+  const density = n > 1 ? edgeCount / ((n * (n - 1)) / 2) : 0;
+  const avgDegree = n ? (edgeCount * 2) / n : 0;
+
+  let components = 0;
+  let largest = 0;
+  const seen = new Array(n).fill(false);
+  for (let i = 0; i < n; i++) {
+    if (seen[i]) continue;
+    components++;
+    let size = 0;
+    const stack = [i];
+    seen[i] = true;
+    while (stack.length) {
+      const node = stack.pop();
+      size++;
+      for (const next of neighbors[node]) {
+        if (seen[next]) continue;
+        seen[next] = true;
+        stack.push(next);
+      }
+    }
+    largest = Math.max(largest, size);
+  }
+
+  let clusteringSum = 0;
+  let clusteringCount = 0;
+  for (let i = 0; i < n; i++) {
+    const adj = Array.from(neighbors[i]);
+    const k = adj.length;
+    if (k < 2) continue;
+    let links = 0;
+    for (let a = 0; a < k; a++) {
+      for (let b = a + 1; b < k; b++) {
+        if (neighbors[adj[a]].has(adj[b])) links++;
+      }
+    }
+    clusteringSum += links / ((k * (k - 1)) / 2);
+    clusteringCount++;
+  }
+
+  return {
+    edges: edgeCount,
+    density,
+    avgDegree,
+    clustering: clusteringCount ? clusteringSum / clusteringCount : 0,
+    components,
+    largestShare: n ? largest / n : 0,
+    avgWeight: edgeCount ? totalWeight / edgeCount : 0,
+  };
+}
+
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
   const theme = THEMES[t.theme] || THEMES.paper;
@@ -75,6 +161,7 @@ function App() {
   const canvasRef = React.useRef(null);
   const [, force] = React.useReducer(n => n + 1, 0);
   const rateHistoryRef = React.useRef([]);
+  const networkHistoryRef = React.useRef(emptyNetworkHistory());
   const lastSampleRef = React.useRef(0);
   const stepOnceRef = React.useRef(false);
   const netStateRef = React.useRef({ positions: {} });
@@ -191,6 +278,8 @@ function App() {
 
   React.useEffect(() => {
     if (farmRef.current) farmRef.current.setCount(t.count);
+    networkHistoryRef.current = emptyNetworkHistory();
+    rateHistoryRef.current = [];
   }, [t.count]);
 
   // reset network positions when switching to network view so layout settles fresh
@@ -224,8 +313,15 @@ function App() {
         if (now - lastSampleRef.current > 250) {
           lastSampleRef.current = now;
           const s = farm.stats();
+          const net = computeNetworkSnapshot(farm);
           rateHistoryRef.current.push(s.rate);
           if (rateHistoryRef.current.length > 80) rateHistoryRef.current.shift();
+          for (const key of Object.keys(networkHistoryRef.current)) {
+            networkHistoryRef.current[key].push(net[key]);
+            if (networkHistoryRef.current[key].length > 80) {
+              networkHistoryRef.current[key].shift();
+            }
+          }
         }
         uiTick += dt;
         if (uiTick > 0.12) { uiTick = 0; force(); }
@@ -237,6 +333,7 @@ function App() {
   }, [t.paused, t.speed, t.interactionFreq, t.style, t.theme, t.view, canPilot, selectedAgentId]);
 
   const stats = farmRef.current ? farmRef.current.stats() : null;
+  const networkSnapshot = farmRef.current ? computeNetworkSnapshot(farmRef.current) : null;
   const selectedAgent = selectedAgentId != null ? farmRef.current?.agents[selectedAgentId] || null : null;
   const canvasInset = 22;
   const hexSeed = t.view === 'network' ? 'NET' : 'FARM';
@@ -317,6 +414,11 @@ function App() {
         <HUD stats={stats} farm={farmRef.current}
              rateHistory={rateHistoryRef.current}
              theme={theme} view={t.view}
+             network={{
+               snapshot: networkSnapshot,
+               history: networkHistoryRef.current,
+               advanced: t.showAdvanced,
+             }}
              pilot={{ mode: interactionMode, selectedAgent }}
              onThemeChange={(k) => setTweak('theme', k)} />
       )}
@@ -353,6 +455,7 @@ function App() {
         <TweakRadio label="Mode" value={t.view}
           options={['farm', 'network']}
           onChange={v => setTweak('view', v)} />
+        <TweakToggle label="Advanced network" value={t.showAdvanced} onChange={v => setTweak('showAdvanced', v)} />
         <TweakSection label="Theme" />
         <TweakSelect label="Theme" value={t.theme}
           options={Object.keys(THEMES).map(k => ({ value: k, label: THEMES[k].label }))}

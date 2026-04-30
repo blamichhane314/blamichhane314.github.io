@@ -46,6 +46,129 @@ function Sparkline({ data, w = 120, h = 28, theme }) {
   );
 }
 
+function SeriesTile({ label, value, sub, data, theme }) {
+  return (
+    <div style={{
+      border: `0.5px solid ${theme.inkFaint}`,
+      background: theme.panelBg,
+      padding: '8px 10px',
+      minWidth: 0,
+    }}>
+      <div style={{ fontSize: 8, letterSpacing: 1.2, opacity: 0.6, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{
+        marginTop: 4,
+        fontSize: 15,
+        fontWeight: 600,
+        lineHeight: 1.1,
+        fontVariantNumeric: 'tabular-nums',
+        color: theme.inkStrong,
+      }}>
+        {value}
+      </div>
+      <div style={{
+        marginTop: 2,
+        minHeight: 11,
+        fontSize: 8,
+        opacity: 0.52,
+        textTransform: 'uppercase',
+        letterSpacing: 0.08em,
+      }}>
+        {sub}
+      </div>
+      <div style={{ marginTop: 6 }}>
+        <Sparkline data={data} w={132} h={24} theme={theme} />
+      </div>
+    </div>
+  );
+}
+
+function AdvancedNetworkPanel({ snapshot, history, theme }) {
+  if (!snapshot || !history) return null;
+  const metrics = [
+    {
+      key: 'density',
+      label: 'Density',
+      value: `${(snapshot.density * 100).toFixed(1)}%`,
+      sub: 'edge fill',
+    },
+    {
+      key: 'avgDegree',
+      label: 'Avg Degree',
+      value: snapshot.avgDegree.toFixed(2),
+      sub: 'unweighted',
+    },
+    {
+      key: 'clustering',
+      label: 'Clustering',
+      value: snapshot.clustering.toFixed(3),
+      sub: 'local mean',
+    },
+    {
+      key: 'components',
+      label: 'Components',
+      value: String(snapshot.components).padStart(2, '0'),
+      sub: 'connected sets',
+    },
+    {
+      key: 'largestShare',
+      label: 'Largest Comp',
+      value: `${(snapshot.largestShare * 100).toFixed(0)}%`,
+      sub: 'node share',
+    },
+    {
+      key: 'avgWeight',
+      label: 'Avg Weight',
+      value: snapshot.avgWeight.toFixed(2),
+      sub: 'per edge',
+    },
+  ];
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 110,
+      right: 46,
+      width: 336,
+      border: `0.5px solid ${theme.inkFaint}`,
+      background: theme.panelBg,
+      backdropFilter: 'blur(8px)',
+      padding: '10px',
+      fontFamily: 'JetBrains Mono, monospace',
+      color: theme.inkStrong,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+        gap: 12,
+      }}>
+        <div style={{ fontSize: 8, letterSpacing: 1.2, opacity: 0.6, textTransform: 'uppercase' }}>
+          Network series
+        </div>
+        <div style={{ fontSize: 8, opacity: 0.5, textTransform: 'uppercase', letterSpacing: 0.08em }}>
+          rolling overlay
+        </div>
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 8,
+      }}>
+        {metrics.map((metric) => (
+          <SeriesTile
+            key={metric.key}
+            label={metric.label}
+            value={metric.value}
+            sub={metric.sub}
+            data={history[metric.key] || []}
+            theme={theme}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MiniMap({ farm, w = 140, h = 90, theme }) {
   if (!farm) return null;
   const sx = w / (farm.w || 1);
@@ -116,12 +239,14 @@ function EventLog({ log, theme }) {
   );
 }
 
-function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot }) {
+function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot, network }) {
   if (!stats) return null;
-  const edgeCount = farm ? farm.edges.size : 0;
+  const snapshot = network?.snapshot || null;
+  const edgeCount = snapshot ? snapshot.edges : (farm ? farm.edges.size : 0);
   // density %: edges / maxPossible
-  const maxE = Math.max(1, (stats.count * (stats.count - 1)) / 2);
-  const density = ((edgeCount / maxE) * 100).toFixed(1);
+  const density = snapshot
+    ? (snapshot.density * 100).toFixed(1)
+    : (((edgeCount / Math.max(1, (stats.count * (stats.count - 1)) / 2))) * 100).toFixed(1);
   const selectedAgent = pilot?.selectedAgent || null;
   return (
     <>
@@ -187,6 +312,10 @@ function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot }) {
         </div>
         <Sparkline data={rateHistory} w={160} h={36} theme={theme} />
       </div>
+
+      {view === 'network' && network?.advanced && (
+        <AdvancedNetworkPanel snapshot={snapshot} history={network.history} theme={theme} />
+      )}
 
       <div style={{ position: 'absolute', bottom: 46, left: 46 }}>
         <EventLog log={farm ? farm.tradeLog : []} theme={theme} />
