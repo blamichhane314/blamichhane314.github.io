@@ -46,7 +46,160 @@ function Sparkline({ data, w = 120, h = 28, theme }) {
   );
 }
 
-function SeriesTile({ label, value, sub, data, theme }) {
+function seriesPalette(theme) {
+  const dark = theme?.label && theme.label !== 'Paper';
+  return dark
+    ? [
+        'rgba(240, 240, 245, 0.95)',
+        'rgba(170, 240, 180, 0.9)',
+        'rgba(255, 190, 110, 0.9)',
+        'rgba(180, 215, 255, 0.88)',
+      ]
+    : [
+        'rgba(42, 44, 56, 0.92)',
+        'rgba(47, 143, 78, 0.92)',
+        'rgba(171, 109, 34, 0.92)',
+        'rgba(64, 108, 170, 0.86)',
+      ];
+}
+
+function NetworkSeriesChart({ history, theme, w = 360, h = 176 }) {
+  const metrics = [
+    { key: 'density', label: 'Density', max: 1, dash: null },
+    { key: 'avgDegree', label: 'Avg degree', max: null, dash: '8 5' },
+    { key: 'clustering', label: 'Clustering', max: 1, dash: '3 4' },
+    { key: 'largestShare', label: 'Largest comp', max: 1, dash: '10 5 2 5' },
+  ];
+  const hasData = metrics.some((metric) => (history?.[metric.key] || []).length > 1);
+  const pad = { top: 10, right: 10, bottom: 22, left: 12 };
+  const innerW = w - pad.left - pad.right;
+  const innerH = h - pad.top - pad.bottom;
+  const colors = seriesPalette(theme);
+
+  const polylineFor = (metric, index) => {
+    const series = history?.[metric.key] || [];
+    if (series.length < 2) return null;
+    const max = metric.max || Math.max(1, ...series);
+    const pts = series.map((value, i) => {
+      const x = pad.left + (i / Math.max(1, series.length - 1)) * innerW;
+      const y = pad.top + innerH - (Math.max(0, value) / max) * innerH;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    });
+    const last = series[series.length - 1];
+    const dotX = pad.left + innerW;
+    const dotY = pad.top + innerH - (Math.max(0, last) / max) * innerH;
+    return (
+      <g key={metric.key}>
+        <polyline
+          fill="none"
+          stroke={colors[index]}
+          strokeWidth="1.8"
+          strokeDasharray={metric.dash || undefined}
+          points={pts.join(' ')}
+        />
+        <circle cx={dotX.toFixed(2)} cy={dotY.toFixed(2)} r="2.4" fill={colors[index]} />
+      </g>
+    );
+  };
+
+  return (
+    <div style={{
+      border: `0.5px solid ${theme.inkFaint}`,
+      background: theme.panelBg,
+      padding: '10px 10px 8px',
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        marginBottom: 8,
+      }}>
+        <div style={{ fontSize: 8, letterSpacing: 1.2, opacity: 0.6, textTransform: 'uppercase' }}>
+          Evolving network
+        </div>
+        <div style={{ fontSize: 8, opacity: 0.48, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          rolling traces
+        </div>
+      </div>
+      <svg width={w} height={h} style={{ display: 'block', width: '100%', height: 'auto' }}>
+        {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+          const y = pad.top + innerH - innerH * t;
+          return (
+            <line
+              key={i}
+              x1={pad.left}
+              x2={w - pad.right}
+              y1={y}
+              y2={y}
+              stroke={theme.inkFaint}
+              strokeWidth="0.5"
+            />
+          );
+        })}
+        <line
+          x1={pad.left}
+          x2={w - pad.right}
+          y1={pad.top + innerH + 0.5}
+          y2={pad.top + innerH + 0.5}
+          stroke={theme.inkFaint}
+          strokeWidth="0.7"
+        />
+        <line
+          x1={pad.left + 0.5}
+          x2={pad.left + 0.5}
+          y1={pad.top}
+          y2={pad.top + innerH}
+          stroke={theme.inkFaint}
+          strokeWidth="0.7"
+        />
+        {metrics.map(polylineFor)}
+        {!hasData && (
+          <text
+            x={(w / 2).toFixed(2)}
+            y={(h / 2).toFixed(2)}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontFamily="JetBrains Mono, monospace"
+            fontSize="10"
+            fill={theme.inkMid}
+          >
+            sampling network history…
+          </text>
+        )}
+      </svg>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        gap: '6px 12px',
+        marginTop: 6,
+      }}>
+        {metrics.map((metric, index) => (
+          <div key={metric.key} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <span style={{
+              display: 'inline-block',
+              width: 18,
+              borderTop: `2px solid ${colors[index]}`,
+              borderTopStyle: metric.dash ? 'dashed' : 'solid',
+              opacity: 0.95,
+            }} />
+            <span style={{
+              fontSize: 8,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: theme.inkMid,
+              whiteSpace: 'nowrap',
+            }}>
+              {metric.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SeriesTile({ label, value, sub, theme }) {
   return (
     <div style={{
       border: `0.5px solid ${theme.inkFaint}`,
@@ -74,9 +227,6 @@ function SeriesTile({ label, value, sub, data, theme }) {
         letterSpacing: '0.08em',
       }}>
         {sub}
-      </div>
-      <div style={{ marginTop: 6 }}>
-        <Sparkline data={data} w={132} h={24} theme={theme} />
       </div>
     </div>
   );
@@ -127,7 +277,7 @@ function AdvancedNetworkPanel({ snapshot, history, theme }) {
       position: 'absolute',
       top: 110,
       right: 46,
-      width: 336,
+      width: 'min(392px, calc(100vw - 92px))',
       border: `0.5px solid ${theme.inkFaint}`,
       background: theme.panelBg,
       backdropFilter: 'blur(8px)',
@@ -146,13 +296,15 @@ function AdvancedNetworkPanel({ snapshot, history, theme }) {
           Network series
         </div>
         <div style={{ fontSize: 8, opacity: 0.5, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          rolling overlay
+          overlay
         </div>
       </div>
+      <NetworkSeriesChart history={history} theme={theme} />
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
         gap: 8,
+        marginTop: 8,
       }}>
         {metrics.map((metric) => (
           <SeriesTile
@@ -160,7 +312,6 @@ function AdvancedNetworkPanel({ snapshot, history, theme }) {
             label={metric.label}
             value={metric.value}
             sub={metric.sub}
-            data={history[metric.key] || []}
             theme={theme}
           />
         ))}
