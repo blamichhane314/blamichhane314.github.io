@@ -56,7 +56,7 @@
   const infoClose = document.getElementById("llm-info-close");
   const infoPanel = document.getElementById("llm-info-panel");
   const promptOrderSelect = document.getElementById("prompt-order");
-  const modelTabs = document.getElementById("sequence-model-tabs");
+  const modelSelect = document.getElementById("sequence-model");
   const runSelect = document.getElementById("sequence-run");
   const speedInput = document.getElementById("sequence-speed");
   const playToggleButton = document.getElementById("sequence-play-toggle");
@@ -69,6 +69,7 @@
   const speedValue = document.getElementById("sequence-speed-value");
   const sequenceCaption = document.getElementById("sequence-caption");
   const sequenceStatusTitle = document.getElementById("sequence-status-title");
+  const sequenceCurrentLine = document.getElementById("sequence-current-line");
   const sequenceStatusChip = document.getElementById("sequence-status-chip");
   const sequenceLengthChip = document.getElementById("sequence-length-chip");
   const sequenceQualityChip = document.getElementById("sequence-quality-chip");
@@ -414,12 +415,12 @@
     }
   }
 
-  function populateModelTabs() {
+  function populateModelSelect() {
     syncModelAndRunState();
-    modelTabs.innerHTML = currentPromptModels()
+    modelSelect.innerHTML = currentPromptModels()
       .map((entry) => {
-        const active = entry.modelKey === state.modelKey ? " is-active" : "";
-        return `<button class="model-chip${active}" type="button" data-model-key="${entry.modelKey}">${entry.modelLabel}</button>`;
+        const selected = entry.modelKey === state.modelKey ? " selected" : "";
+        return `<option value="${entry.modelKey}"${selected}>${entry.modelLabel}</option>`;
       })
       .join("");
     const activeModel = currentPromptModels().find((item) => item.modelKey === state.modelKey);
@@ -566,24 +567,24 @@
       return;
     }
 
-    const start = Math.max(0, state.step - 5);
-    const end = Math.min(run.edges.length, Math.max(state.step + 4, 8));
-    const items = [];
-
-    for (let index = start; index < end; index += 1) {
-      const edge = run.edges[index];
+    const currentIndex = state.step > 0 ? state.step - 1 : -1;
+    const items = run.edges.map((edge, index) => {
       const kindClass = edge.isGroundTruth ? "is-correct" : "is-hallucinated";
+      const statusClass = index < currentIndex ? "is-emitted" : index === currentIndex ? "is-current is-emitted" : "is-queued";
       const kindLabel = edge.isGroundTruth ? "correct" : "hallucinated";
-      const status = index < state.step - 1 ? "emitted" : index === state.step - 1 ? "current" : "queued";
-      items.push(`
-        <li class="${kindClass}">
-          <span class="step-id">step ${String(index + 1).padStart(3, "0")}</span>
-          <span><strong>${edge.source}-${edge.target}</strong> ${kindLabel} <em>(${status})</em></span>
+      return `
+        <li class="sequence-token ${kindClass} ${statusClass}" data-sequence-index="${index}">
+          <span class="token-step">step ${String(index + 1).padStart(3, "0")}</span>
+          <strong>${edge.source} ↔ ${edge.target}</strong>
+          <span>${kindLabel}</span>
         </li>
-      `);
-    }
-
+      `;
+    });
     sequenceLog.innerHTML = items.join("");
+    const currentToken = sequenceLog.querySelector(".is-current");
+    if (currentToken) {
+      currentToken.scrollIntoView({ block: "nearest", inline: "center" });
+    }
   }
 
   function renderSummary() {
@@ -644,10 +645,12 @@
 
     if (!current) {
       sequenceStatusTitle.textContent = "Current emission";
+      sequenceCurrentLine.textContent = "Graph ring follows the prompt order. Tokens below follow the model's emitted edge order.";
       sequenceCaption.textContent = "ground truth in grey, emitted edges on top";
     } else {
       const kind = current.isGroundTruth ? "correct" : "hallucinated";
       sequenceStatusTitle.textContent = `${current.source} to ${current.target}`;
+      sequenceCurrentLine.textContent = `${current.source} ↔ ${current.target} · ${kind} · step ${state.step} of ${run.edges.length}`;
       sequenceCaption.textContent = `${labelForNode(current.source)} ↔ ${labelForNode(current.target)} · ${kind}`;
     }
 
@@ -713,23 +716,19 @@
     state.promptKey = promptOrderSelect.value;
     state.modelKey = null;
     state.runFile = null;
-    populateModelTabs();
+    populateModelSelect();
     populateRunSelect();
     await resetRun({ keepPlaying: false, initialStep: 1 });
   });
 
-  modelTabs.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-model-key]");
-    if (!button) {
-      return;
-    }
-    const nextModel = button.getAttribute("data-model-key");
+  modelSelect.addEventListener("change", async () => {
+    const nextModel = modelSelect.value;
     if (!nextModel || nextModel === state.modelKey) {
       return;
     }
     state.modelKey = nextModel;
     state.runFile = null;
-    populateModelTabs();
+    populateModelSelect();
     populateRunSelect();
     await resetRun({ keepPlaying: false, initialStep: 1 });
   });
@@ -794,7 +793,7 @@
       setInfoOpen(false);
       state.data = await loadBaseData();
       promptOrderSelect.value = state.promptKey;
-      populateModelTabs();
+      populateModelSelect();
       populateRunSelect();
       await resetRun({ keepPlaying: true });
     } catch (error) {

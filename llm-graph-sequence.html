@@ -66,43 +66,41 @@
           <span id="sequence-caption">loading run data</span>
         </div>
 
-        <div class="llm-frame">
+        <div class="llm-workbench">
           <div class="graph-stage">
             <svg id="sequence-canvas" viewBox="0 0 960 620" aria-label="Sequential graph generation canvas"></svg>
           </div>
 
           <aside class="llm-sidebar">
-            <section class="compact-stats">
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Model</div>
-                <div class="metric-value" id="seq-model-stat">--</div>
-              </article>
-
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Run</div>
-                <div class="metric-value" id="seq-run-stat">--</div>
-              </article>
-
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Prompt</div>
-                <div class="metric-value" id="seq-prompt-stat">--</div>
-              </article>
-
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Step</div>
-                <div class="metric-value" id="seq-step-stat">--</div>
-              </article>
-
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Correct</div>
-                <div class="metric-value" id="seq-correct-stat">--</div>
-              </article>
-
-              <article class="stat-card compact-stat">
-                <div class="metric-label">Hallucinated</div>
-                <div class="metric-value" id="seq-hallucinated-stat">--</div>
-              </article>
-            </section>
+            <article class="compact-card llm-run-card">
+              <p class="panel-label">Run</p>
+              <dl class="metric-pairs">
+                <div class="metric-pair">
+                  <dt>Model</dt>
+                  <dd id="seq-model-stat">--</dd>
+                </div>
+                <div class="metric-pair">
+                  <dt>Run</dt>
+                  <dd id="seq-run-stat">--</dd>
+                </div>
+                <div class="metric-pair">
+                  <dt>Prompt</dt>
+                  <dd id="seq-prompt-stat">--</dd>
+                </div>
+                <div class="metric-pair">
+                  <dt>Step</dt>
+                  <dd id="seq-step-stat">--</dd>
+                </div>
+                <div class="metric-pair">
+                  <dt>Correct</dt>
+                  <dd id="seq-correct-stat">--</dd>
+                </div>
+                <div class="metric-pair">
+                  <dt>Hallucinated</dt>
+                  <dd id="seq-hallucinated-stat">--</dd>
+                </div>
+              </dl>
+            </article>
 
             <article class="compact-card control-card">
               <p class="panel-label">Controls</p>
@@ -115,10 +113,10 @@
                 </select>
               </label>
 
-              <div class="model-filter-block">
-                <div class="select-line"><span>Model</span><span class="range-value" id="model-label">--</span></div>
-                <div class="model-chip-row" id="sequence-model-tabs"></div>
-              </div>
+              <label>
+                <span class="select-line"><span>Model</span><span class="range-value" id="model-label">--</span></span>
+                <select id="sequence-model"></select>
+              </label>
 
               <label>
                 <span class="select-line"><span>Run</span><span class="range-value" id="run-label">--</span></span>
@@ -142,30 +140,33 @@
                 <button class="module-button" id="sequence-reset" type="button">Reset</button>
               </div>
             </article>
+
+            <article class="compact-card log-card llm-overlay-card">
+              <p class="panel-label">Overlay</p>
+              <div class="legend-list">
+                <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth</span></div>
+                <div class="legend-item"><span class="legend-swatch correct"></span><span>correct</span></div>
+                <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated</span></div>
+              </div>
+              <ul class="summary-list dynamic-list" id="run-summary"></ul>
+            </article>
           </aside>
         </div>
 
-        <div class="llm-bottom-strip">
-          <article class="compact-card log-card llm-bottom-card">
-            <p class="panel-label" id="sequence-status-title">Current emission</p>
+        <article class="compact-card llm-sequence-card">
+          <div class="sequence-card-head">
+            <div>
+              <p class="panel-label" id="sequence-status-title">Current emission</p>
+              <div class="sequence-current-line" id="sequence-current-line">Waiting for playback</div>
+            </div>
             <div class="status-line">
               <span class="status-chip" id="sequence-status-chip">Running</span>
               <span class="status-chip" id="sequence-length-chip">0 of 0</span>
               <span class="status-chip" id="sequence-quality-chip">--</span>
             </div>
-            <ol class="sequence-log" id="sequence-log"></ol>
-          </article>
-
-          <article class="compact-card log-card llm-bottom-card">
-            <p class="panel-label">Overlay</p>
-            <div class="legend-list">
-              <div class="legend-item"><span class="legend-swatch ground"></span><span>ground truth</span></div>
-              <div class="legend-item"><span class="legend-swatch correct"></span><span>correct</span></div>
-              <div class="legend-item"><span class="legend-swatch hallucinated"></span><span>hallucinated</span></div>
-            </div>
-            <ul class="summary-list dynamic-list" id="run-summary"></ul>
-          </article>
-        </div>
+          </div>
+          <ol class="sequence-log sequence-ribbon" id="sequence-log"></ol>
+        </article>
       </section>
     </main>
   </div>
