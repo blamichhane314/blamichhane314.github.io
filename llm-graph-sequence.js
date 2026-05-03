@@ -652,7 +652,10 @@
     sequenceLog.innerHTML = items.join("");
     const currentToken = sequenceLog.querySelector(".is-current");
     if (currentToken) {
-      currentToken.scrollIntoView({ block: "nearest", inline: "center" });
+      const targetLeft =
+        currentToken.offsetLeft - (sequenceLog.clientWidth - currentToken.offsetWidth) / 2;
+      const maxLeft = Math.max(0, sequenceLog.scrollWidth - sequenceLog.clientWidth);
+      sequenceLog.scrollLeft = Math.max(0, Math.min(maxLeft, targetLeft));
     }
   }
 
