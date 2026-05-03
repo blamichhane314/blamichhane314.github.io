@@ -49,9 +49,19 @@
     timer: null,
     data: null,
     runCache: new Map(),
+    pan: { x: 0, y: 28 },
+    drag: {
+      active: false,
+      pointerId: null,
+      startClientX: 0,
+      startClientY: 0,
+      startPanX: 0,
+      startPanY: 0,
+    },
   };
 
   const canvas = document.getElementById("sequence-canvas");
+  const graphStage = canvas.closest(".graph-stage");
   const infoToggle = document.getElementById("llm-info-toggle");
   const infoClose = document.getElementById("llm-info-close");
   const infoPanel = document.getElementById("llm-info-panel");
@@ -84,6 +94,7 @@
   const seqStepStat = document.getElementById("seq-step-stat");
   const seqCorrectStat = document.getElementById("seq-correct-stat");
   const seqHallucinatedStat = document.getElementById("seq-hallucinated-stat");
+  let graphLayer = null;
 
   function setInfoOpen(open) {
     infoPanel.hidden = !open;
@@ -447,6 +458,10 @@
     promptText.textContent = prompt.text;
   }
 
+  function appendToGraph(node) {
+    (graphLayer || canvas).appendChild(node);
+  }
+
   function drawLine(x1, y1, x2, y2, className, opacity = null) {
     const line = document.createElementNS(svgNs, "line");
     line.setAttribute("x1", x1.toFixed(2));
@@ -457,7 +472,7 @@
     if (opacity !== null) {
       line.setAttribute("stroke-opacity", opacity.toFixed(3));
     }
-    canvas.appendChild(line);
+    appendToGraph(line);
   }
 
   function drawNodeLabel(position, text, isSelected = false) {
@@ -486,7 +501,56 @@
     }
 
     label.textContent = text;
-    canvas.appendChild(label);
+    appendToGraph(label);
+  }
+
+  function graphExtents() {
+    const positions = state.data?.positionsByPrompt?.[state.promptKey];
+    if (!positions) {
+      return null;
+    }
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    positions.forEach((position) => {
+      if (position.x < minX) minX = position.x;
+      if (position.x > maxX) maxX = position.x;
+      if (position.y < minY) minY = position.y;
+      if (position.y > maxY) maxY = position.y;
+    });
+
+    return { minX, maxX, minY, maxY };
+  }
+
+  function clampPan(x, y) {
+    const extents = graphExtents();
+    if (!extents) {
+      return { x, y };
+    }
+
+    const padX = 120;
+    const padY = 110;
+    const minX = bounds.width - (extents.maxX + padX);
+    const maxX = padX - extents.minX;
+    const minY = bounds.height - (extents.maxY + padY);
+    const maxY = padY - extents.minY;
+
+    return {
+      x: Math.min(maxX, Math.max(minX, x)),
+      y: Math.min(maxY, Math.max(minY, y)),
+    };
+  }
+
+  function updateGraphTransform() {
+    if (!graphLayer) {
+      return;
+    }
+    const pan = clampPan(state.pan.x, state.pan.y);
+    state.pan = pan;
+    graphLayer.setAttribute("transform", `translate(${pan.x.toFixed(2)} ${pan.y.toFixed(2)})`);
   }
 
   function renderGraph() {
@@ -494,6 +558,11 @@
     if (!state.data) {
       return;
     }
+
+    graphLayer = document.createElementNS(svgNs, "g");
+    graphLayer.setAttribute("class", "graph-scene");
+    canvas.appendChild(graphLayer);
+    updateGraphTransform();
 
     const positions = state.data.positionsByPrompt[state.promptKey];
     const emitted = emittedEdges();
@@ -532,7 +601,7 @@
         halo.setAttribute("fill", "none");
         halo.setAttribute("stroke", current.isGroundTruth ? "rgba(47, 143, 78, 0.18)" : "rgba(196, 71, 71, 0.2)");
         halo.setAttribute("stroke-width", "2");
-        canvas.appendChild(halo);
+        appendToGraph(halo);
       });
     }
 
@@ -550,7 +619,7 @@
       graphNode.setAttribute("cx", position.x.toFixed(2));
       graphNode.setAttribute("cy", position.y.toFixed(2));
       graphNode.setAttribute("r", radius.toFixed(2));
-      canvas.appendChild(graphNode);
+      appendToGraph(graphNode);
     });
 
     state.data.nodes.forEach((node) => {
@@ -655,6 +724,12 @@
     }
 
     playToggleButton.textContent = state.playing ? "Pause" : "Play";
+  }
+
+  function endDrag() {
+    state.drag.active = false;
+    state.drag.pointerId = null;
+    graphStage.classList.remove("is-dragging");
   }
 
   function render() {
@@ -772,6 +847,50 @@
     state.step = 0;
     await loadRun(state.promptKey, state.runFile);
     render();
+  });
+
+  canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) {
+      return;
+    }
+    state.drag.active = true;
+    state.drag.pointerId = event.pointerId;
+    state.drag.startClientX = event.clientX;
+    state.drag.startClientY = event.clientY;
+    state.drag.startPanX = state.pan.x;
+    state.drag.startPanY = state.pan.y;
+    graphStage.classList.add("is-dragging");
+    canvas.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointermove", (event) => {
+    if (!state.drag.active || state.drag.pointerId !== event.pointerId) {
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = bounds.width / rect.width;
+    const scaleY = bounds.height / rect.height;
+    const next = clampPan(
+      state.drag.startPanX + (event.clientX - state.drag.startClientX) * scaleX,
+      state.drag.startPanY + (event.clientY - state.drag.startClientY) * scaleY,
+    );
+    state.pan = next;
+    updateGraphTransform();
+    event.preventDefault();
+  });
+
+  canvas.addEventListener("pointerup", (event) => {
+    if (state.drag.pointerId === event.pointerId) {
+      endDrag();
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  });
+
+  canvas.addEventListener("pointercancel", (event) => {
+    if (state.drag.pointerId === event.pointerId) {
+      endDrag();
+    }
   });
 
   infoToggle.addEventListener("click", () => {

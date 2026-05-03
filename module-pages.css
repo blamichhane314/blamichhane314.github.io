@@ -309,6 +309,10 @@ a {
 .graph-stage {
   position: relative;
   min-height: 510px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
   background:
     linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
     linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
@@ -322,6 +326,10 @@ a {
   display: block;
   width: 100%;
   min-height: 510px;
+}
+
+.graph-stage.is-dragging {
+  cursor: grabbing;
 }
 
 .llm-frame .graph-stage,
