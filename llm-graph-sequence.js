@@ -16,6 +16,8 @@
         "claude_sonnet_4.6_extendedthinking_rep1.json",
         "claude_sonnet_4.6_extendedthinking_rep2.json",
         "claude_opus_4.7_rep1.json",
+        "claude_opus_4.7_rep2.json",
+        "claude_opus_4.7_rep3.json",
         "gemini_3_thinking_rep1.json",
         "gemini_3_thinking_rep2.json",
         "gptoss_120b_hight_rep1.json",
