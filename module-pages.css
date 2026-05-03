@@ -70,6 +70,11 @@ a {
   box-shadow: none;
 }
 
+.llm-page .module-toolbar {
+  position: relative;
+  top: auto;
+}
+
 .toolbar-actions {
   display: inline-flex;
   align-items: center;
@@ -312,7 +317,7 @@ a {
   overflow: hidden;
   cursor: grab;
   user-select: none;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
   background:
     linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
     linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),

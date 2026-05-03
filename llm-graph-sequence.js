@@ -853,6 +853,9 @@
     if (event.button !== 0) {
       return;
     }
+    if (event.pointerType && event.pointerType !== "mouse" && event.pointerType !== "pen") {
+      return;
+    }
     state.drag.active = true;
     state.drag.pointerId = event.pointerId;
     state.drag.startClientX = event.clientX;
