@@ -10,6 +10,8 @@
       orderKey: "default",
       runDir: "default_prompt",
       runs: [
+        "gpt_5.5_rep1.json",
+        "gpt_5.5_rep2.json",
         "gpt_5.2_thinking_rep1.json",
         "gpt_5.2_thinking_rep2.json",
         "gpt_5.2_thinking_with_internet_rep3.json",
@@ -105,6 +107,7 @@
   }
 
   const MODEL_PATTERNS = [
+    ["gpt_5.5", "gpt_5.5", "GPT-5.5"],
     ["claude_opus_4.7", "claude_opus_4.7", "Claude Opus 4.7"],
     ["gpt_5.2_thinking_with_internet", "gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
     ["gpt_5.2_thinking_rev", "gpt_5.2_thinking_rev", "GPT-5.2 thinking rev"],
