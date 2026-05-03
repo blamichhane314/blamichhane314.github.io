@@ -15,6 +15,7 @@
         "gpt_5.2_thinking_with_internet_rep3.json",
         "claude_sonnet_4.6_extendedthinking_rep1.json",
         "claude_sonnet_4.6_extendedthinking_rep2.json",
+        "claude_opus_4.7_rep1.json",
         "gemini_3_thinking_rep1.json",
         "gemini_3_thinking_rep2.json",
         "gptoss_120b_hight_rep1.json",
@@ -102,6 +103,7 @@
   }
 
   const MODEL_PATTERNS = [
+    ["claude_opus_4.7", "claude_opus_4.7", "Claude Opus 4.7"],
     ["gpt_5.2_thinking_with_internet", "gpt_5.2_thinking_with_internet", "GPT-5.2 thinking + internet"],
     ["gpt_5.2_thinking_rev", "gpt_5.2_thinking_rev", "GPT-5.2 thinking rev"],
     ["gpt_5.2_thinking", "gpt_5.2_thinking", "GPT-5.2 thinking"],
