@@ -28,26 +28,48 @@
         </div>
 
         <div class="graphlab-frame">
-          <div class="graphlab-compare-grid">
-            <article class="graphlab-graph-card">
-              <div class="graphlab-graph-head">
-                <span>Graph A</span>
-                <span id="graph-a-subtitle">--</span>
-              </div>
-              <div class="mini-graph-stage">
-                <svg id="graph-a-canvas" viewBox="0 0 480 520" aria-label="Graph A canvas"></svg>
-              </div>
-            </article>
+          <div class="graphlab-visual-column">
+            <div class="graphlab-compare-grid">
+              <article class="graphlab-graph-card">
+                <div class="graphlab-graph-head">
+                  <span>Graph A</span>
+                  <span id="graph-a-subtitle">--</span>
+                </div>
+                <div class="mini-graph-stage">
+                  <svg id="graph-a-canvas" viewBox="0 0 480 400" aria-label="Graph A canvas"></svg>
+                </div>
+              </article>
 
-            <article class="graphlab-graph-card">
-              <div class="graphlab-graph-head">
-                <span>Graph B</span>
-                <span id="graph-b-subtitle">--</span>
-              </div>
-              <div class="mini-graph-stage">
-                <svg id="graph-b-canvas" viewBox="0 0 480 520" aria-label="Graph B canvas"></svg>
-              </div>
-            </article>
+              <article class="graphlab-graph-card">
+                <div class="graphlab-graph-head">
+                  <span>Graph B</span>
+                  <span id="graph-b-subtitle">--</span>
+                </div>
+                <div class="mini-graph-stage">
+                  <svg id="graph-b-canvas" viewBox="0 0 480 400" aria-label="Graph B canvas"></svg>
+                </div>
+              </article>
+            </div>
+
+            <div class="graphlab-distribution-row">
+              <article class="graphlab-distribution-card">
+                <p class="panel-label">Batch Distribution</p>
+                <div class="status-line">
+                  <span class="status-chip" id="batch-stat-chip">Edge count</span>
+                  <span class="status-chip" id="batch-count-chip">80 samples</span>
+                </div>
+                <div class="distribution-stage">
+                  <svg id="distribution-canvas" viewBox="0 0 960 220" aria-label="Batch distribution chart"></svg>
+                </div>
+              </article>
+
+              <article class="graphlab-distribution-card log-card graphlab-summary-card">
+                <p class="panel-label">Batch Summary</p>
+                <ul class="summary-list" id="batch-summary">
+                  <li>Loading batch summary.</li>
+                </ul>
+              </article>
+            </div>
           </div>
 
           <aside class="graphlab-sidebar">
@@ -122,26 +144,6 @@
               </ul>
             </article>
           </aside>
-        </div>
-
-        <div class="graphlab-bottom-strip">
-          <article class="graphlab-bottom-card">
-            <p class="panel-label">Batch Distribution</p>
-            <div class="status-line">
-              <span class="status-chip" id="batch-stat-chip">Edge count</span>
-              <span class="status-chip" id="batch-count-chip">80 samples</span>
-            </div>
-            <div class="distribution-stage">
-              <svg id="distribution-canvas" viewBox="0 0 960 260" aria-label="Batch distribution chart"></svg>
-            </div>
-          </article>
-
-          <article class="graphlab-bottom-card log-card">
-            <p class="panel-label">Batch Summary</p>
-            <ul class="summary-list" id="batch-summary">
-              <li>Loading batch summary.</li>
-            </ul>
-          </article>
         </div>
       </section>
     </main>

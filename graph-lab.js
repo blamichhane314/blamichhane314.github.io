@@ -1,7 +1,7 @@
 (() => {
   const svgNs = "http://www.w3.org/2000/svg";
-  const graphBounds = { width: 480, height: 520, padX: 44, padY: 48 };
-  const distributionBounds = { width: 960, height: 260 };
+  const graphBounds = { width: 480, height: 400, padX: 42, padY: 34 };
+  const distributionBounds = { width: 960, height: 220 };
 
   const state = {
     nodeCount: 16,

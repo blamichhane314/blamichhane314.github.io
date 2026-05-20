@@ -365,15 +365,21 @@ a {
 
 .graphlab-frame {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+}
+
+.graphlab-visual-column {
+  display: grid;
+  grid-template-rows: auto auto;
+  min-width: 0;
+  border-right: 1px solid var(--line);
 }
 
 .graphlab-compare-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
-  border-right: 1px solid var(--line);
 }
 
 .graphlab-graph-card {
@@ -400,7 +406,7 @@ a {
 }
 
 .mini-graph-stage {
-  min-height: 520px;
+  min-height: 340px;
   background:
     linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
     linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
@@ -413,35 +419,35 @@ a {
 .mini-graph-stage svg {
   display: block;
   width: 100%;
-  min-height: 520px;
+  height: 340px;
 }
 
 .graphlab-sidebar {
   display: grid;
   align-content: start;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
   background: rgba(255, 252, 247, 0.34);
 }
 
-.graphlab-bottom-strip {
+.graphlab-distribution-row {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
   gap: 0;
   border-top: 1px solid var(--line);
 }
 
-.graphlab-bottom-card {
-  padding: 16px;
+.graphlab-distribution-card {
+  padding: 14px 16px 16px;
 }
 
-.graphlab-bottom-card + .graphlab-bottom-card {
+.graphlab-distribution-card + .graphlab-distribution-card {
   border-left: 1px solid var(--line);
 }
 
 .distribution-stage {
-  min-height: 260px;
-  margin-top: 12px;
+  min-height: 200px;
+  margin-top: 10px;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.46);
 }
@@ -449,7 +455,11 @@ a {
 .distribution-stage svg {
   display: block;
   width: 100%;
-  min-height: 260px;
+  height: 200px;
+}
+
+.graphlab-summary-card .summary-list {
+  margin-top: 10px;
 }
 
 .compact-card {
@@ -932,17 +942,17 @@ a {
 
   .graphlab-frame,
   .graphlab-compare-grid,
-  .graphlab-bottom-strip {
+  .graphlab-distribution-row {
     grid-template-columns: 1fr;
   }
 
-  .graphlab-compare-grid {
+  .graphlab-visual-column {
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
   .graphlab-graph-card + .graphlab-graph-card,
-  .graphlab-bottom-card + .graphlab-bottom-card {
+  .graphlab-distribution-card + .graphlab-distribution-card {
     border-left: 0;
     border-top: 1px solid var(--line);
   }
@@ -970,7 +980,11 @@ a {
   .graph-stage svg,
   .mini-graph-stage,
   .mini-graph-stage svg {
-    min-height: 420px;
+    min-height: 300px;
+  }
+
+  .mini-graph-stage svg {
+    height: 300px;
   }
 
   .sequence-card-head {
