@@ -335,71 +335,393 @@ function drawTrade(ctx, farm, trade, t, theme) {
 // Network view: force-directed layout over edges
 // ────────────────────────────────────────────────────────────
 
+function quantile(sorted, q) {
+  if (!sorted.length) return 0;
+  const clamped = Math.max(0, Math.min(1, q));
+  const pos = (sorted.length - 1) * clamped;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  if (lo === hi) return sorted[lo];
+  const frac = pos - lo;
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * frac;
+}
+
+function communityPalette(theme) {
+  return theme?.label && theme.label !== 'Paper'
+    ? [
+        '142, 196, 255',
+        '132, 220, 166',
+        '255, 205, 120',
+        '205, 176, 255',
+        '255, 154, 144',
+        '146, 220, 224',
+      ]
+    : [
+        '78, 106, 146',
+        '77, 126, 92',
+        '165, 117, 78',
+        '121, 96, 164',
+        '163, 94, 94',
+        '86, 128, 134',
+      ];
+}
+
+function communityInk(theme, index, alpha = 1) {
+  const palette = communityPalette(theme);
+  return `rgba(${palette[index % palette.length]}, ${alpha})`;
+}
+
+function finalizeCommunities(byNode, weightedDegree) {
+  const grouped = new Map();
+  for (let i = 0; i < byNode.length; i++) {
+    const key = String(byNode[i]);
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(i);
+  }
+  const communities = Array.from(grouped.values())
+    .map(members => ({
+      id: Math.min(...members),
+      members: members.slice().sort((a, b) => a - b),
+      strength: members.reduce((sum, nodeId) => sum + (weightedDegree[nodeId] || 0), 0),
+    }))
+    .sort((a, b) => b.members.length - a.members.length || b.strength - a.strength || a.id - b.id);
+
+  const normalized = new Array(byNode.length).fill(null);
+  const memberIndex = new Map();
+  for (const community of communities) {
+    for (let i = 0; i < community.members.length; i++) {
+      const nodeId = community.members[i];
+      normalized[nodeId] = community.id;
+      memberIndex.set(nodeId, i);
+    }
+  }
+  return { byNode: normalized, communities, memberIndex };
+}
+
+function buildStrongTieCommunities(agents, neighbors, weights, weightedDegree) {
+  const n = agents.length;
+  const sorted = weights.slice().sort((a, b) => a - b);
+  const maxWeight = sorted[sorted.length - 1] || 1;
+  const mean = weights.reduce((sum, value) => sum + value, 0) / Math.max(1, weights.length);
+  const variance = weights.reduce((sum, value) => sum + (value - mean) ** 2, 0) / Math.max(1, weights.length);
+  let threshold = Math.min(
+    maxWeight,
+    Math.max(2, Math.round(Math.max(quantile(sorted, 0.68), mean + Math.sqrt(variance) * 0.22)))
+  );
+  let best = null;
+
+  for (; threshold <= maxWeight; threshold++) {
+    const assigned = new Array(n).fill(null);
+    const seen = new Array(n).fill(false);
+
+    for (let i = 0; i < n; i++) {
+      if (seen[i]) continue;
+      const strongNeighbors = Array.from(neighbors[i].entries()).filter(([, weight]) => weight >= threshold);
+      if (!strongNeighbors.length) continue;
+      const stack = [i];
+      const members = [];
+      seen[i] = true;
+      while (stack.length) {
+        const node = stack.pop();
+        members.push(node);
+        for (const [next, weight] of neighbors[node]) {
+          if (weight < threshold || seen[next]) continue;
+          seen[next] = true;
+          stack.push(next);
+        }
+      }
+      const groupId = Math.min(...members);
+      for (const nodeId of members) assigned[nodeId] = groupId;
+    }
+
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let i = 0; i < n; i++) {
+        if (assigned[i] != null) continue;
+        let bestGroup = null;
+        let bestWeight = 0;
+        for (const [next, weight] of neighbors[i]) {
+          if (assigned[next] == null || weight < bestWeight) continue;
+          bestWeight = weight;
+          bestGroup = assigned[next];
+        }
+        if (bestGroup != null && bestWeight >= Math.max(1, threshold - 1)) {
+          assigned[i] = bestGroup;
+          changed = true;
+        }
+      }
+    }
+
+    for (let i = 0; i < n; i++) {
+      if (assigned[i] == null) assigned[i] = i;
+    }
+
+    best = finalizeCommunities(assigned, weightedDegree);
+    const multiNodeGroups = best.communities.filter(community => community.members.length > 1).length;
+    if (multiNodeGroups >= 2 || threshold === maxWeight) break;
+  }
+
+  if (!best) {
+    return finalizeCommunities(Array.from({ length: n }, (_, index) => index), weightedDegree);
+  }
+
+  const reassigned = best.byNode.slice();
+  const sizes = new Map(best.communities.map(community => [community.id, community.members.length]));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = 0; i < n; i++) {
+      const currentGroup = reassigned[i];
+      if ((sizes.get(currentGroup) || 0) > 1) continue;
+      let bestGroup = null;
+      let bestWeight = 0;
+      for (const [next, weight] of neighbors[i]) {
+        const nextGroup = reassigned[next];
+        if (nextGroup === currentGroup || (sizes.get(nextGroup) || 0) < 2 || weight < bestWeight) continue;
+        bestWeight = weight;
+        bestGroup = nextGroup;
+      }
+      if (bestGroup != null && bestWeight >= Math.max(1, threshold - 1)) {
+        sizes.set(currentGroup, Math.max(0, (sizes.get(currentGroup) || 1) - 1));
+        reassigned[i] = bestGroup;
+        sizes.set(bestGroup, (sizes.get(bestGroup) || 0) + 1);
+        changed = true;
+      }
+    }
+  }
+
+  return finalizeCommunities(reassigned, weightedDegree);
+}
+
+function buildSeededCommunities(agents, neighbors, weightedDegree) {
+  const n = agents.length;
+  if (n < 2) {
+    return finalizeCommunities(Array.from({ length: n }, () => 0), weightedDegree);
+  }
+  const seedTarget = Math.max(2, Math.min(4, Math.round(Math.sqrt(n) / 1.8)));
+  const seeds = [];
+
+  while (seeds.length < Math.min(seedTarget, n)) {
+    let bestNode = null;
+    let bestScore = -Infinity;
+    for (let i = 0; i < n; i++) {
+      if (seeds.includes(i)) continue;
+      let penalty = 0;
+      for (const seed of seeds) penalty += (neighbors[i].get(seed) || 0) * 1.75;
+      const score = weightedDegree[i] - penalty;
+      if (score > bestScore || (score === bestScore && (bestNode == null || i < bestNode))) {
+        bestScore = score;
+        bestNode = i;
+      }
+    }
+    if (bestNode == null) break;
+    seeds.push(bestNode);
+  }
+
+  const byNode = new Array(n).fill(seeds[0] ?? 0);
+  const locked = new Set(seeds);
+  for (let i = 0; i < n; i++) {
+    if (locked.has(i)) {
+      byNode[i] = i;
+      continue;
+    }
+    let bestSeed = seeds[0] ?? i;
+    let bestScore = -Infinity;
+    for (const seed of seeds) {
+      const direct = neighbors[i].get(seed) || 0;
+      const score = direct * 2 + weightedDegree[seed] * 0.03;
+      if (score > bestScore || (score === bestScore && seed < bestSeed)) {
+        bestScore = score;
+        bestSeed = seed;
+      }
+    }
+    byNode[i] = bestSeed;
+  }
+
+  const order = Array.from({ length: n }, (_, index) => index).sort(
+    (a, b) => weightedDegree[b] - weightedDegree[a] || a - b
+  );
+  for (let iter = 0; iter < 6; iter++) {
+    for (const nodeId of order) {
+      if (locked.has(nodeId)) continue;
+      const scores = new Map();
+      for (const [next, weight] of neighbors[nodeId]) {
+        const label = byNode[next];
+        scores.set(label, (scores.get(label) || 0) + weight);
+      }
+      scores.set(byNode[nodeId], (scores.get(byNode[nodeId]) || 0) + weightedDegree[nodeId] * 0.08);
+
+      let bestLabel = byNode[nodeId];
+      let bestScore = -Infinity;
+      for (const seed of seeds) {
+        const seededScore = (scores.get(seed) || 0) + (neighbors[nodeId].get(seed) || 0) * 0.35;
+        if (seededScore > bestScore || (seededScore === bestScore && seed < bestLabel)) {
+          bestScore = seededScore;
+          bestLabel = seed;
+        }
+      }
+      byNode[nodeId] = bestLabel;
+    }
+  }
+
+  return finalizeCommunities(byNode, weightedDegree);
+}
+
+function detectCommunities(agents, edges) {
+  const n = agents.length;
+  const neighbors = Array.from({ length: n }, () => new Map());
+  const weightedDegree = new Array(n).fill(0);
+  const weights = [];
+
+  for (const e of edges.values()) {
+    if (!agents[e.a] || !agents[e.b]) continue;
+    neighbors[e.a].set(e.b, e.weight);
+    neighbors[e.b].set(e.a, e.weight);
+    weightedDegree[e.a] += e.weight;
+    weightedDegree[e.b] += e.weight;
+    weights.push(e.weight);
+  }
+
+  let base;
+  if (!n) {
+    base = { byNode: [], communities: [], memberIndex: new Map() };
+  } else if (!weights.length) {
+    base = finalizeCommunities(new Array(n).fill(0), weightedDegree);
+  } else {
+    base = buildStrongTieCommunities(agents, neighbors, weights, weightedDegree);
+    const multiNodeGroups = base.communities.filter(community => community.members.length > 1).length;
+    if (multiNodeGroups < 2 && n >= 8) {
+      base = buildSeededCommunities(agents, neighbors, weightedDegree);
+    }
+  }
+
+  const groupIndexById = new Map();
+  for (let index = 0; index < base.communities.length; index++) {
+    groupIndexById.set(String(base.communities[index].id), index);
+  }
+
+  return {
+    ...base,
+    groupIndexById,
+    weightedDegree,
+    neighbors,
+  };
+}
+
+function buildCommunityAnchors(communities, w, h) {
+  const anchors = new Map();
+  if (!communities.length) return anchors;
+  const ordered = communities.slice().sort((a, b) => a.id - b.id);
+  const cx = w / 2;
+  const cy = h / 2;
+  if (ordered.length === 1) {
+    anchors.set(ordered[0].id, { x: cx, y: cy });
+    return anchors;
+  }
+
+  const rx = Math.max(120, Math.min(w * 0.26, 270));
+  const ry = Math.max(90, Math.min(h * 0.22, 200));
+  for (let i = 0; i < ordered.length; i++) {
+    const community = ordered[i];
+    const angle = -Math.PI / 2 + (i / ordered.length) * Math.PI * 2;
+    const scale = 1 + Math.min(0.18, (community.members.length - 1) * 0.015);
+    anchors.set(community.id, {
+      x: cx + Math.cos(angle) * rx * scale,
+      y: cy + Math.sin(angle) * ry * scale,
+    });
+  }
+  return anchors;
+}
+
 function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
-  // Apply tiny force sim in-place on netState.positions
   const agents = farm.agents;
+  const edges = farm.edges;
+  const communityData = detectCommunities(agents, edges);
+  const communitiesById = new Map(communityData.communities.map(community => [community.id, community]));
+  const anchors = buildCommunityAnchors(communityData.communities, w, h);
+  const center = { x: w / 2, y: h / 2 };
   const pos = netState.positions;
-  // ensure positions exist for every agent
+
   for (const a of agents) {
     if (!pos[a.id]) {
+      const communityId = communityData.byNode[a.id];
+      const community = communitiesById.get(communityId);
+      const anchor = anchors.get(communityId) || center;
+      const slot = communityData.memberIndex.get(a.id) || 0;
+      const localCount = Math.max(1, community?.members.length || 1);
+      const baseRadius = 24 + Math.min(38, (communityData.weightedDegree[a.id] || 0) * 0.8 + localCount * 2);
+      const angle = (slot / localCount) * Math.PI * 2 + a.id * 0.37;
       pos[a.id] = {
-        x: w / 2 + Math.cos(a.id * 0.6) * 80 + (Math.random() - 0.5) * 20,
-        y: h / 2 + Math.sin(a.id * 0.6) * 80 + (Math.random() - 0.5) * 20,
+        x: anchor.x + Math.cos(angle) * baseRadius + (Math.random() - 0.5) * 18,
+        y: anchor.y + Math.sin(angle) * baseRadius + (Math.random() - 0.5) * 18,
         vx: 0, vy: 0,
       };
     }
   }
-  // prune positions for removed agents
   for (const k of Object.keys(pos)) {
     if (!agents[+k]) delete pos[+k];
   }
 
-  // Forces
-  const cx = w / 2, cy = h / 2;
-  const edges = farm.edges;
   const maxWeight = Math.max(1, ...Array.from(edges.values()).map(e => e.weight));
+  const multipleCommunities = communityData.communities.length > 1;
+  const centerPull = multipleCommunities ? 0.00012 : 0.00032;
+  const anchorPull = multipleCommunities ? 0.0023 : 0.00095;
+  const repulsionBase = multipleCommunities ? 1650 : 1120;
 
-  // repulsion
   for (let i = 0; i < agents.length; i++) {
-    const a = agents[i]; if (!pos[a.id]) continue;
+    const a = agents[i];
+    if (!pos[a.id]) continue;
     const pa = pos[a.id];
-    // center gravity
-    pa.vx += (cx - pa.x) * 0.0008;
-    pa.vy += (cy - pa.y) * 0.0008;
+    const communityId = communityData.byNode[a.id];
+    const anchor = anchors.get(communityId) || center;
+    pa.vx += (center.x - pa.x) * centerPull;
+    pa.vy += (center.y - pa.y) * centerPull;
+    pa.vx += (anchor.x - pa.x) * anchorPull;
+    pa.vy += (anchor.y - pa.y) * anchorPull;
+
     for (let j = i + 1; j < agents.length; j++) {
-      const b = agents[j]; if (!pos[b.id]) continue;
+      const b = agents[j];
+      if (!pos[b.id]) continue;
       const pb = pos[b.id];
-      let dx = pa.x - pb.x, dy = pa.y - pb.y;
+      let dx = pa.x - pb.x;
+      let dy = pa.y - pb.y;
       let d2 = dx * dx + dy * dy;
       if (d2 < 1) { d2 = 1; dx = 0.5; dy = 0.5; }
-      const f = 900 / d2;
+      const sameCommunity = communityData.byNode[a.id] === communityData.byNode[b.id];
+      const f = (repulsionBase * (sameCommunity ? 0.74 : 1.14)) / d2;
       dx /= Math.sqrt(d2); dy /= Math.sqrt(d2);
       pa.vx += dx * f; pa.vy += dy * f;
       pb.vx -= dx * f; pb.vy -= dy * f;
     }
   }
-  // attraction via edges (weighted)
+
   for (const e of edges.values()) {
     const pa = pos[e.a], pb = pos[e.b];
     if (!pa || !pb) continue;
+    const sameCommunity = communityData.byNode[e.a] === communityData.byNode[e.b];
     const dx = pb.x - pa.x, dy = pb.y - pa.y;
     const d = Math.hypot(dx, dy) || 1;
-    const target = 110 - Math.min(60, e.weight * 3); // higher weight = shorter
-    const k = 0.01 + Math.min(0.08, e.weight * 0.003);
+    const target = sameCommunity
+      ? 150 - Math.min(54, e.weight * 2.3)
+      : 190 - Math.min(26, e.weight * 1.0);
+    const k = sameCommunity
+      ? 0.009 + Math.min(0.055, e.weight * 0.0024)
+      : 0.004 + Math.min(0.02, e.weight * 0.0012);
     const f = (d - target) * k;
     pa.vx += (dx / d) * f;
     pa.vy += (dy / d) * f;
     pb.vx -= (dx / d) * f;
     pb.vy -= (dy / d) * f;
   }
-  // integrate with damping + bounds
-  const margin = 40;
+
+  const margin = 54;
   for (const id in pos) {
     const p = pos[id];
-    p.vx *= 0.82; p.vy *= 0.82;
-    // clamp velocity
+    p.vx *= 0.86;
+    p.vy *= 0.86;
     const sp = Math.hypot(p.vx, p.vy);
-    if (sp > 6) { p.vx *= 6 / sp; p.vy *= 6 / sp; }
+    if (sp > 5.6) { p.vx *= 5.6 / sp; p.vy *= 5.6 / sp; }
     p.x += p.vx; p.y += p.vy;
     if (p.x < margin) { p.x = margin; p.vx *= -0.3; }
     if (p.x > w - margin) { p.x = w - margin; p.vx *= -0.3; }
@@ -407,11 +729,51 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
     if (p.y > h - margin) { p.y = h - margin; p.vy *= -0.3; }
   }
 
-  // ─── draw edges ───
+  if (multipleCommunities) {
+    ctx.save();
+    for (const community of communityData.communities) {
+      if (community.members.length < 2) continue;
+      let cx = 0;
+      let cy = 0;
+      let count = 0;
+      for (const member of community.members) {
+        const p = pos[member];
+        if (!p) continue;
+        cx += p.x;
+        cy += p.y;
+        count++;
+      }
+      if (!count) continue;
+      cx /= count;
+      cy /= count;
+      let radius = 52;
+      for (const member of community.members) {
+        const p = pos[member];
+        if (!p) continue;
+        radius = Math.max(radius, Math.hypot(p.x - cx, p.y - cy) + 32);
+      }
+      radius = Math.min(210, radius);
+      const colorIndex = communityData.groupIndexById.get(String(community.id)) || 0;
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      glow.addColorStop(0, communityInk(theme, colorIndex, theme?.label === 'Paper' ? 0.065 : 0.09));
+      glow.addColorStop(0.55, communityInk(theme, colorIndex, theme?.label === 'Paper' ? 0.028 : 0.045));
+      glow.addColorStop(1, communityInk(theme, colorIndex, 0));
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   ctx.save();
   for (const e of edges.values()) {
     const pa = pos[e.a], pb = pos[e.b];
     if (!pa || !pb) continue;
+    const communityA = communityData.byNode[e.a];
+    const communityB = communityData.byNode[e.b];
+    const sameCommunity = communityA === communityB;
+    const communityIndex = communityData.groupIndexById.get(String(communityA)) || 0;
     const w01 = e.weight / maxWeight;
     const age = (performance.now() - e.lastT) / 1000;
     const hot = Math.max(0, 1 - age / 3);
@@ -433,8 +795,10 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
         ctx.strokeStyle = themedInk(theme, Math.min(0.34, alpha * 0.42));
       }
     } else {
-      ctx.lineWidth = width;
-      ctx.strokeStyle = themedInk(theme, Math.min(0.95, alpha));
+      ctx.lineWidth = sameCommunity ? width : Math.max(0.42, width * 0.76);
+      ctx.strokeStyle = sameCommunity
+        ? communityInk(theme, communityIndex, Math.min(0.78, 0.14 + w01 * 0.34 + hot * 0.15))
+        : themedInk(theme, Math.min(0.42, 0.08 + w01 * 0.22 + hot * 0.12));
     }
     ctx.beginPath();
     ctx.moveTo(pa.x, pa.y);
@@ -474,24 +838,34 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
 
   // ─── draw nodes ───
   for (const a of agents) {
-    const p = pos[a.id]; if (!p) continue;
-    // degree ring sized by connections
-    let totalW = 0;
-    for (const e of edges.values()) {
-      if (e.a === a.id || e.b === a.id) totalW += e.weight;
-    }
+    const p = pos[a.id];
+    if (!p) continue;
+    const totalW = communityData.weightedDegree[a.id] || 0;
+    const communityId = communityData.byNode[a.id];
+    const communityIndex = communityData.groupIndexById.get(String(communityId)) || 0;
     const radius = 10 + Math.min(8, totalW * 0.5);
     const isSelected = selection?.selectedId === a.id;
     const relationLevel = selection ? (selection.levels.get(a.id) || 0) : 0;
     const isActiveMate = selection?.engagedPartnerId === a.id;
     const dimNode = selection && !isSelected && relationLevel <= 0;
-    // ring
+
     ctx.save();
+    ctx.fillStyle = isSelected
+      ? pilotInk(theme, 0.22)
+      : relationLevel > 0
+        ? pilotInk(theme, Math.min(0.18, 0.06 + relationLevel * 0.14))
+        : communityInk(theme, communityIndex, dimNode ? 0.06 : (multipleCommunities ? 0.18 : 0.11));
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(7, radius - 1.5), 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.strokeStyle = isSelected
       ? pilotInk(theme, 0.95)
       : relationLevel > 0
         ? pilotInk(theme, Math.min(0.78, 0.28 + relationLevel * 0.48 + (isActiveMate ? 0.12 : 0)))
-        : themedInk(theme, dimNode ? 0.22 : 0.4);
+        : multipleCommunities
+          ? communityInk(theme, communityIndex, dimNode ? 0.22 : 0.62)
+          : themedInk(theme, dimNode ? 0.22 : 0.4);
     ctx.lineWidth = isSelected ? 1.8 : relationLevel > 0 ? 1.3 : 1;
     ctx.beginPath();
     ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
@@ -520,9 +894,12 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
       p.x,
       p.y,
       1.5,
-      isSelected ? pilotInk(theme, 0.98) : themedInk(theme, theme?.inkA ?? 0.92)
+      isSelected
+        ? pilotInk(theme, 0.98)
+        : multipleCommunities
+          ? communityInk(theme, communityIndex, dimNode ? 0.48 : 0.9)
+          : themedInk(theme, theme?.inkA ?? 0.92)
     );
-    // label
     ctx.fillStyle = isSelected
       ? pilotInk(theme, 0.9)
       : relationLevel > 0
