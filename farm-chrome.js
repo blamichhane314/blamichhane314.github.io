@@ -100,7 +100,7 @@ function Chrome({ children, style, title = 'FARM.SIM', theme }) {
                   x={x}
                   y={inset - 6}
                   fontSize="8"
-                  fontFamily="JetBrains Mono, monospace"
+                  fontFamily="Geist Mono, ui-monospace, monospace"
                   fill={ink}
                   textAnchor="middle"
                 >
@@ -134,7 +134,7 @@ function Chrome({ children, style, title = 'FARM.SIM', theme }) {
                 x={inset - 4}
                 y={y + 3}
                 fontSize="8"
-                fontFamily="JetBrains Mono, monospace"
+                fontFamily="Geist Mono, ui-monospace, monospace"
                 fill={ink}
                 textAnchor="end"
               >
@@ -156,7 +156,7 @@ function Chrome({ children, style, title = 'FARM.SIM', theme }) {
           })}
 
         {/* Title strip above top frame (in margin, not over grid) */}
-        <g fontFamily="JetBrains Mono, monospace" fill={ink}>
+        <g fontFamily="Geist Mono, ui-monospace, monospace" fill={ink}>
           <text x={inset + 4} y={inset - 5} fontSize="9" fontWeight="600" letterSpacing="1">
             {title}
           </text>

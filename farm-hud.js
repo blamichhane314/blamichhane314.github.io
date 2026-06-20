@@ -9,7 +9,7 @@ function StatCard({ label, value, unit, sub, theme }) {
       backdropFilter: 'blur(8px)',
       padding: '8px 10px',
       minWidth: 96,
-      fontFamily: 'JetBrains Mono, monospace',
+      fontFamily: 'Geist Mono, ui-monospace, monospace',
       color: theme.inkStrong,
     }}>
       <div style={{ fontSize: 8, letterSpacing: 1.2, opacity: 0.65, textTransform: 'uppercase' }}>{label}</div>
@@ -160,7 +160,7 @@ function NetworkSeriesChart({ history, theme, w = 360, h = 176 }) {
             y={(h / 2).toFixed(2)}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontFamily="JetBrains Mono, monospace"
+            fontFamily="Geist Mono, ui-monospace, monospace"
             fontSize="10"
             fill={theme.inkMid}
           >
@@ -282,7 +282,7 @@ function AdvancedNetworkPanel({ snapshot, history, theme }) {
       background: theme.panelBg,
       backdropFilter: 'blur(8px)',
       padding: '10px',
-      fontFamily: 'JetBrains Mono, monospace',
+      fontFamily: 'Geist Mono, ui-monospace, monospace',
       color: theme.inkStrong,
     }}>
       <div style={{
@@ -360,7 +360,7 @@ function EventLog({ log, theme }) {
       background: theme.panelBg,
       backdropFilter: 'blur(8px)',
       padding: '8px 10px',
-      fontFamily: 'JetBrains Mono, monospace',
+      fontFamily: 'Geist Mono, ui-monospace, monospace',
       fontSize: 9.5,
       color: theme.inkStrong,
       minWidth: 230,
@@ -427,7 +427,7 @@ function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot, netw
         background: theme.panelBg,
         backdropFilter: 'blur(8px)',
         padding: '8px 10px',
-        fontFamily: 'JetBrains Mono, monospace',
+        fontFamily: 'Geist Mono, ui-monospace, monospace',
         color: theme.inkStrong,
       }}>
         <div style={{
@@ -475,7 +475,7 @@ function HUD({ stats, farm, rateHistory, theme, view, onThemeChange, pilot, netw
       <div style={{
         position: 'absolute', bottom: 46, right: 46,
         display: 'flex', flexDirection: 'column', gap: 4,
-        fontFamily: 'JetBrains Mono, monospace',
+        fontFamily: 'Geist Mono, ui-monospace, monospace',
         color: theme.inkMid,
         fontSize: 8, letterSpacing: 1.2, textTransform: 'uppercase',
         alignItems: 'flex-end',

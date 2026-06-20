@@ -427,7 +427,7 @@ function App() {
       <div style={{
         position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', gap: 0,
-        fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: 1,
+        fontFamily: 'Geist Mono, ui-monospace, monospace', fontSize: 10, letterSpacing: 1,
         textTransform: 'uppercase',
       }}>
         {['farm', 'network'].map(v => (

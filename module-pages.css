@@ -1,15 +1,17 @@
 :root {
-  --paper: oklch(0.985 0.002 80);
-  --paper-deep: #f3efe7;
-  --ink: rgba(42, 44, 56, 0.94);
-  --muted: rgba(42, 44, 56, 0.68);
-  --line: rgba(42, 44, 56, 0.12);
-  --line-strong: rgba(42, 44, 56, 0.26);
-  --panel: rgba(255, 252, 247, 0.52);
-  --panel-strong: rgba(255, 255, 255, 0.82);
-  --shadow: 0 10px 20px rgba(42, 44, 56, 0.04);
-  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --body: "IBM Plex Sans", sans-serif;
+  --paper: #faf9f6;
+  --paper-deep: #f5f2ec;
+  --ink: #232020;
+  --muted: #a8a29a;
+  --line: rgba(35, 32, 32, 0.08);
+  --line-strong: rgba(35, 32, 32, 0.16);
+  --hover: rgba(35, 32, 32, 0.035);
+  --panel: rgba(255, 252, 247, 0.64);
+  --panel-strong: rgba(255, 255, 255, 0.88);
+  --shadow: 0 12px 22px rgba(35, 32, 32, 0.05);
+  --heading: "Geist", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+  --body: "Geist", system-ui, sans-serif;
 }
 
 * {
@@ -26,8 +28,10 @@ body {
   font-family: var(--body);
   color: var(--ink);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 248, 243, 0.94)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(250, 249, 246, 0.98)),
     linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body::before {
@@ -36,12 +40,12 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(42, 44, 56, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.018) 1px, transparent 1px),
-    linear-gradient(rgba(42, 44, 56, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.045) 1px, transparent 1px);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(rgba(35, 32, 32, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.028) 1px, transparent 1px);
   background-size: 32px 32px, 32px 32px, 128px 128px, 128px 128px;
-  opacity: 0.42;
+  opacity: 0.34;
 }
 
 a {
@@ -49,25 +53,26 @@ a {
 }
 
 .module-shell {
-  width: min(1280px, calc(100vw - 28px));
-  margin: 14px auto 36px;
+  width: min(1280px, calc(100vw - 44px));
+  margin: 24px auto 52px;
 }
 
 .module-toolbar {
   position: sticky;
-  top: 14px;
+  top: 18px;
   z-index: 40;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 16px;
-  min-height: 72px;
-  padding: 12px 18px;
+  gap: 24px;
+  min-height: 76px;
+  padding: 16px 26px;
   border: 1px solid var(--line);
+  border-radius: 12px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 248, 243, 0.9));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 249, 246, 0.94));
   backdrop-filter: blur(18px);
-  box-shadow: none;
+  box-shadow: var(--shadow);
 }
 
 .llm-page .module-toolbar {
@@ -87,14 +92,26 @@ a {
   align-items: center;
   min-height: 40px;
   padding: 0 14px;
-  border: 1px solid var(--line-strong);
-  background: rgba(255, 252, 247, 0.84);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 252, 247, 0.8);
   color: var(--ink);
   text-decoration: none;
   font-family: var(--mono);
   font-size: 0.72rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.toolbar-link:hover,
+.toolbar-chip:hover {
+  background: var(--hover);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
 }
 
 .toolbar-button {
@@ -110,24 +127,24 @@ a {
 }
 
 .toolbar-title {
-  font-family: var(--mono);
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-family: var(--heading, var(--body));
+  font-size: 1.08rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .toolbar-subtitle {
   color: var(--muted);
   font-family: var(--mono);
   font-size: 0.68rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .module-main {
   display: grid;
-  gap: 28px;
-  margin-top: 24px;
+  gap: 30px;
+  margin-top: 30px;
 }
 
 .llm-info-panel[hidden] {
@@ -160,12 +177,12 @@ a {
 }
 
 .panel {
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
-    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px);
   background-size: auto, 26px 26px, 26px 26px;
 }
 
@@ -174,12 +191,12 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 12px 0;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-family: var(--mono);
   font-size: 0.7rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -201,11 +218,11 @@ a {
 .panel-label,
 .metric-label,
 .section-label {
-  color: var(--ink);
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-weight: 400;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -216,7 +233,7 @@ a {
 .control-card p,
 .summary-list li {
   color: var(--muted);
-  line-height: 1.72;
+  line-height: 1.68;
 }
 
 .hero-copy p {
@@ -286,17 +303,17 @@ a {
 }
 
 .surface-panel {
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border: 1px solid var(--line);
+  border-radius: 12px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .llm-panel {
-  border: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
-    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px);
   background-size: auto, 26px 26px, 26px 26px;
 }
 
@@ -319,11 +336,11 @@ a {
   user-select: none;
   touch-action: pan-y pinch-zoom;
   background:
-    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(rgba(42, 44, 56, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.04) 1px, transparent 1px),
-    rgba(255, 255, 255, 0.4);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(rgba(35, 32, 32, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.03) 1px, transparent 1px),
+    rgba(255, 255, 255, 0.34);
   background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px, auto;
 }
 
@@ -346,16 +363,15 @@ a {
   display: grid;
   align-content: start;
   gap: 10px;
-  padding: 10px 12px;
-  background: rgba(255, 252, 247, 0.34);
+  padding: 16px 16px 14px;
+  background: rgba(255, 252, 247, 0.44);
 }
 
 .graphlab-panel {
-  border: 1px solid var(--line);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.08)),
-    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px);
   background-size: auto, 26px 26px, 26px 26px;
 }
 
@@ -408,11 +424,11 @@ a {
 .mini-graph-stage {
   min-height: 340px;
   background:
-    linear-gradient(rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.014) 1px, transparent 1px),
-    linear-gradient(rgba(42, 44, 56, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(42, 44, 56, 0.04) 1px, transparent 1px),
-    rgba(255, 255, 255, 0.4);
+    linear-gradient(rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.012) 1px, transparent 1px),
+    linear-gradient(rgba(35, 32, 32, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(35, 32, 32, 0.03) 1px, transparent 1px),
+    rgba(255, 255, 255, 0.34);
   background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px, auto;
 }
 
@@ -426,8 +442,8 @@ a {
   display: grid;
   align-content: start;
   gap: 12px;
-  padding: 12px;
-  background: rgba(255, 252, 247, 0.34);
+  padding: 16px;
+  background: rgba(255, 252, 247, 0.44);
 }
 
 .graphlab-distribution-row {
@@ -449,7 +465,8 @@ a {
   min-height: 200px;
   margin-top: 10px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.46);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .distribution-stage svg {
@@ -501,6 +518,21 @@ a {
   margin: 0;
 }
 
+.control-card select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 0.92rem;
+}
+
+.control-card input[type="range"] {
+  accent-color: var(--ink);
+}
+
 .prompt-details {
   margin-top: 10px;
   border-top: 1px solid var(--line);
@@ -530,7 +562,8 @@ a {
   overflow: auto;
   padding: 8px 9px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.52);
   color: var(--muted);
   white-space: pre-wrap;
   font-family: var(--mono);
@@ -547,23 +580,34 @@ a {
 
 .module-button {
   appearance: none;
-  border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.78);
   color: var(--ink);
   min-height: 34px;
   padding: 0 10px;
   font-family: var(--mono);
   font-size: 0.64rem;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   cursor: pointer;
   flex: 1 1 0;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.module-button:hover {
+  background: var(--hover);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
 }
 
 .module-button.primary {
-  background: rgba(42, 44, 56, 0.9);
-  border-color: rgba(42, 44, 56, 0.9);
+  background: var(--ink);
+  border-color: var(--ink);
   color: var(--paper);
 }
 

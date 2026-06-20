@@ -811,7 +811,7 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
       ctx.fillStyle = selectedNeighbor != null
         ? pilotInk(theme, 0.82)
         : themedInk(theme, selection ? 0.38 : 0.75);
-      ctx.font = '8.5px JetBrains Mono, monospace';
+      ctx.font = '8.5px Geist Mono, ui-monospace, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(e.weight), mx, my);
@@ -905,7 +905,7 @@ function drawNetwork(ctx, farm, w, h, t, theme, style, netState, selection) {
       : relationLevel > 0
         ? pilotInk(theme, Math.min(0.82, 0.3 + relationLevel * 0.42))
         : themedInk(theme, dimNode ? 0.38 : 0.55);
-    ctx.font = '8px JetBrains Mono, monospace';
+    ctx.font = '8px Geist Mono, ui-monospace, monospace';
     ctx.textAlign = 'center';
     ctx.fillText(a.label, p.x, p.y + radius + 10);
   }

@@ -7,24 +7,28 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: "Geist", system-ui, sans-serif;
     font-size: 11px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: oklch(0.985 0.002 80);
-    color: rgba(42, 44, 56, 0.9);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(250, 249, 246, 0.98)),
+      linear-gradient(180deg, #faf9f6 0%, #f5f2ec 100%);
+    color: #232020;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   .host-toolbar {
     height: 72px;
-    padding: 0 18px;
+    padding: 0 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
-    border-bottom: 1px solid rgba(42, 44, 56, 0.12);
+    gap: 24px;
+    border-bottom: 1px solid rgba(35, 32, 32, 0.08);
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 248, 243, 0.9));
+      linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 249, 246, 0.94));
     backdrop-filter: blur(18px);
     flex: 0 0 auto;
   }
@@ -36,7 +40,7 @@
   }
   .toolbar-group.divided {
     padding-left: 16px;
-    border-left: 1px solid rgba(42, 44, 56, 0.12);
+    border-left: 1px solid rgba(35, 32, 32, 0.08);
   }
   .toolbar-stack {
     display: flex;
@@ -46,8 +50,9 @@
   .toolbar-btn,
   .toolbar-toggle {
     appearance: none;
-    border: 1px solid rgba(42, 44, 56, 0.16);
-    background: rgba(255, 252, 247, 0.82);
+    border: 1px solid rgba(35, 32, 32, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 252, 247, 0.8);
     color: inherit;
     font: inherit;
     display: inline-flex;
@@ -56,13 +61,15 @@
     min-height: 40px;
     padding: 0 12px;
     cursor: pointer;
-    letter-spacing: 0.08em;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     transition:
       background .16s ease,
       border-color .16s ease,
       color .16s ease,
-      opacity .16s ease;
+      opacity .16s ease,
+      transform .16s ease;
   }
   .toolbar-btn {
     opacity: 0.82;
@@ -70,14 +77,17 @@
   .toolbar-segmented {
     display: inline-flex;
     align-items: stretch;
-    border: 1px solid rgba(42, 44, 56, 0.16);
-    background: rgba(255, 252, 247, 0.82);
+    border: 1px solid rgba(35, 32, 32, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 252, 247, 0.8);
+    overflow: hidden;
   }
   .toolbar-segmented .toolbar-btn {
     min-height: 40px;
     border: 0;
-    border-right: 1px solid rgba(42, 44, 56, 0.12);
+    border-right: 1px solid rgba(35, 32, 32, 0.08);
     background: transparent;
+    border-radius: 0;
   }
   .toolbar-segmented .toolbar-btn:last-child {
     border-right: 0;
@@ -85,22 +95,23 @@
   .toolbar-btn:hover,
   .toolbar-toggle:hover {
     opacity: 1;
-    border-color: rgba(42, 44, 56, 0.28);
-    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(35, 32, 32, 0.16);
+    background: rgba(35, 32, 32, 0.035);
+    transform: translateY(-1px);
   }
   .toolbar-segmented:hover {
-    border-color: rgba(42, 44, 56, 0.28);
-    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(35, 32, 32, 0.16);
+    background: rgba(255, 255, 255, 0.9);
   }
   .toolbar-segmented .toolbar-btn:hover {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(35, 32, 32, 0.035);
   }
   .toolbar-btn.is-on {
     opacity: 1;
     font-weight: 600;
-    color: oklch(0.985 0.002 80);
-    border-color: rgba(42, 44, 56, 0.92);
-    background: rgba(42, 44, 56, 0.9);
+    color: #faf9f6;
+    border-color: #232020;
+    background: #232020;
   }
   .toolbar-btn svg,
   .toolbar-toggle svg {
@@ -114,9 +125,9 @@
     font-weight: 500;
   }
   .toolbar-toggle.is-on {
-    color: oklch(0.985 0.002 80);
-    border-color: rgba(42, 44, 56, 0.92);
-    background: rgba(42, 44, 56, 0.9);
+    color: #faf9f6;
+    border-color: #232020;
+    background: #232020;
   }
   .toolbar-switch {
     position: relative;
@@ -143,8 +154,9 @@
     opacity: 1;
   }
   .toolbar-zoom {
-    opacity: 0.75;
-    font-weight: 500;
+    color: #a8a29a;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-weight: 400;
   }
   .host-info-panel {
     position: fixed;
@@ -152,11 +164,12 @@
     right: 18px;
     width: min(360px, calc(100vw - 28px));
     padding: 16px 16px 14px;
-    border: 1px solid rgba(42, 44, 56, 0.18);
+    border: 1px solid rgba(35, 32, 32, 0.08);
+    border-radius: 12px;
     background: rgba(255, 252, 247, 0.92);
-    color: rgba(42, 44, 56, 0.9);
+    color: #232020;
     backdrop-filter: blur(16px);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 18px 40px rgba(35, 32, 32, 0.12);
     z-index: 12;
   }
   .host-info-panel[hidden] {
@@ -176,13 +189,15 @@
   }
   .host-info-title strong {
     font-size: 13px;
-    letter-spacing: 0.06em;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
   .host-info-title span {
-    opacity: 0.58;
+    color: #a8a29a;
     font-size: 10px;
-    letter-spacing: 0.08em;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
   .host-info-close {
@@ -193,11 +208,11 @@
   .host-info-panel p {
     margin: 0 0 10px;
     line-height: 1.65;
-    opacity: 0.86;
+    color: rgba(35, 32, 32, 0.78);
   }
   .host-info-block {
     padding-top: 10px;
-    border-top: 1px solid rgba(42, 44, 56, 0.1);
+    border-top: 1px solid rgba(35, 32, 32, 0.08);
   }
   .host-info-block + .host-info-block {
     margin-top: 10px;
@@ -206,7 +221,8 @@
     display: block;
     margin-bottom: 5px;
     font-size: 10px;
-    letter-spacing: 0.08em;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
   }
   .host-page-link {
@@ -219,14 +235,16 @@
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    border: 1px solid rgba(42, 44, 56, 0.18);
-    background: rgba(255, 252, 247, 0.84);
-    color: rgba(42, 44, 56, 0.9);
+    border: 1px solid rgba(35, 32, 32, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 252, 247, 0.86);
+    color: #232020;
     text-decoration: none;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.05em;
     backdrop-filter: blur(12px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 24px rgba(35, 32, 32, 0.08);
     transition:
       transform .16s ease,
       background .16s ease,
@@ -235,12 +253,12 @@
   }
   .host-page-link:hover {
     transform: translateX(-50%) translateY(-1px);
-    background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(42, 44, 56, 0.32);
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+    background: rgba(35, 32, 32, 0.035);
+    border-color: rgba(35, 32, 32, 0.16);
+    box-shadow: 0 14px 28px rgba(35, 32, 32, 0.12);
   }
   .host-page-link .sub {
-    opacity: 0.56;
+    color: #a8a29a;
     letter-spacing: 0.04em;
     text-transform: none;
   }
@@ -278,7 +296,7 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="host-toolbar">
